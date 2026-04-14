@@ -77,11 +77,11 @@ export default async function ProjectPage({
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden">
-      <header className="flex min-w-0 shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-        <h1 className="min-w-0 max-w-full shrink-0 truncate text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+      <header className="relative flex min-w-0 shrink-0 flex-col items-center gap-2 sm:min-h-[3.25rem] sm:justify-center sm:gap-0 sm:py-0.5">
+        <h1 className="w-full min-w-0 max-w-full truncate text-center text-2xl font-semibold tracking-tight text-white sm:max-w-[min(100%,calc(100%-11rem))] sm:px-2 sm:text-3xl">
           {project.name}
         </h1>
-        <div className="flex min-w-0 justify-start sm:max-w-[min(100%,28rem)] sm:justify-end">
+        <div className="flex w-full min-w-0 justify-center sm:absolute sm:inset-y-0 sm:right-0 sm:z-10 sm:w-auto sm:max-w-[min(100%,28rem)] sm:items-center sm:justify-end">
           <PhasePills
             activePhaseId={activePhaseId}
             phases={phases}
