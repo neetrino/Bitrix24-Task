@@ -1,13 +1,15 @@
 'use client';
 
 import { useEffect, useRef, type ReactNode } from 'react';
-import { WORKSPACE_PANEL_CLASS } from '@/shared/ui/workspace-ui';
 
 export type ChatMessageLine = {
   id: string;
   role: string;
   content: string;
 };
+
+/** Readable column width — matches floating composer below. */
+const CHAT_CONTENT_MAX = 'max-w-3xl';
 
 type ProjectChatWorkspaceProps = {
   messages: ChatMessageLine[];
@@ -23,40 +25,46 @@ export function ProjectChatWorkspace({ messages, composer }: ProjectChatWorkspac
   }, [messages]);
 
   return (
-    <div className={`flex h-full min-h-[280px] flex-col ${WORKSPACE_PANEL_CLASS}`}>
+    <div className="relative flex h-full min-h-0 flex-1 flex-col">
       <div
-        className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4"
+        className="min-h-0 flex-1 overflow-y-auto"
         ref={scrollRef}
       >
-        {messages.length === 0 ? (
-          <p className="text-center text-sm text-slate-500">
-            Describe your goal — the assistant will structure tasks and update the plan.
-          </p>
-        ) : (
-          messages.map((m) => (
-            <div
-              className={`flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-              key={m.id}
-            >
-              <div
-                className={`flex max-w-[min(100%,720px)] flex-col gap-1 rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                  m.role === 'user'
-                    ? 'bg-violet-600/35 text-slate-100'
-                    : 'border border-white/10 bg-slate-950/50 text-slate-200'
-                }`}
-              >
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                  {m.role === 'user' ? 'You' : 'Assistant'}
-                </span>
-                <span className="whitespace-pre-wrap">{m.content}</span>
-              </div>
+        <div className={`mx-auto w-full ${CHAT_CONTENT_MAX} px-4 pb-40 pt-4`}>
+          {messages.length === 0 ? (
+            <p className="py-12 text-center text-sm text-slate-500">
+              Describe your goal — the assistant will structure tasks and update the plan.
+            </p>
+          ) : (
+            <div className="space-y-10">
+              {messages.map((m) =>
+                m.role === 'user' ? (
+                  <div className="flex justify-end" key={m.id}>
+                    <div className="max-w-[min(100%,85%)] rounded-2xl bg-violet-600/30 px-4 py-3 text-sm leading-relaxed text-slate-100">
+                      <span className="whitespace-pre-wrap">{m.content}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm leading-relaxed text-slate-200" key={m.id}>
+                    <span className="mb-2 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                      Assistant
+                    </span>
+                    <span className="whitespace-pre-wrap">{m.content}</span>
+                  </div>
+                ),
+              )}
             </div>
-          ))
-        )}
-        <div aria-hidden ref={bottomRef} />
+          )}
+          <div aria-hidden ref={bottomRef} />
+        </div>
       </div>
-      <div className="shrink-0 border-t border-white/10 bg-slate-950/60 p-4 backdrop-blur-sm">
-        {composer}
+
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-slate-950 from-50% via-slate-950/90 to-transparent pb-3 pt-16"
+      />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-4 pt-8">
+        <div className={`pointer-events-auto w-full ${CHAT_CONTENT_MAX}`}>{composer}</div>
       </div>
     </div>
   );
