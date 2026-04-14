@@ -18,9 +18,9 @@ type TasksViewMode = 'grid' | 'list';
 
 /** Left strip (~20% viewport): glass backdrop, click closes drawer. */
 const TASKS_DRAWER_BACKDROP_WIDTH_CLASS = 'w-1/5';
-/** Right panel (~80% viewport): task list. */
+/** Right panel (~80% viewport): task list; slide-in via `tasks-drawer-panel-enter` in globals.css. */
 const TASKS_DRAWER_PANEL_WIDTH_CLASS = 'w-4/5';
-const TASKS_DRAWER_SLIDE_TRANSITION_CLASS = 'transition-transform duration-300 ease-out';
+const TASKS_DRAWER_PANEL_ENTER_CLASS = 'tasks-drawer-panel-enter';
 
 export function PlanTasksFullscreenModal({
   open,
@@ -76,7 +76,6 @@ export function PlanTasksFullscreenModal({
   const searchId = useId();
   const tasksLayoutRegionId = useId();
   const [mounted, setMounted] = useState(false);
-  const [panelEntered, setPanelEntered] = useState(false);
   const [viewMode, setViewMode] = useState<TasksViewMode>('grid');
   const rows = useMemo(() => buildFlatPlanTasks(plan), [plan]);
   const filtered = useMemo(() => filterFlatPlanTasks(rows, search), [rows, search]);
@@ -103,17 +102,6 @@ export function PlanTasksFullscreenModal({
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
-  useEffect(() => {
-    if (!open) return;
-    setPanelEntered(false);
-    const id = requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setPanelEntered(true);
-      });
-    });
-    return () => cancelAnimationFrame(id);
-  }, [open]);
-
   if (!mounted || !open) return null;
 
   const content: ReactNode = (
@@ -130,9 +118,7 @@ export function PlanTasksFullscreenModal({
         type="button"
       />
       <div
-        className={`relative z-[101] flex h-dvh min-h-0 shrink-0 flex-col overflow-hidden rounded-l-2xl border border-white/10 border-r-0 bg-slate-950/95 shadow-2xl shadow-black/60 ring-1 ring-white/5 backdrop-blur-xl ${TASKS_DRAWER_PANEL_WIDTH_CLASS} ${TASKS_DRAWER_SLIDE_TRANSITION_CLASS} ${
-          panelEntered ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`relative z-[101] flex h-dvh min-h-0 shrink-0 flex-col overflow-hidden rounded-l-2xl border border-white/10 border-r-0 bg-slate-950/95 shadow-2xl shadow-black/60 ring-1 ring-white/5 backdrop-blur-xl ${TASKS_DRAWER_PANEL_WIDTH_CLASS} ${TASKS_DRAWER_PANEL_ENTER_CLASS}`}
       >
         <div className="flex shrink-0 flex-col gap-3 border-b border-white/10 px-4 py-3 sm:px-5">
           <div className="flex items-start justify-between gap-3">

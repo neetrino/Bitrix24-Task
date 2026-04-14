@@ -31,6 +31,26 @@ body {
   animation-delay: -7s;
 }
 
+@keyframes tasks-drawer-slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.tasks-drawer-panel-enter {
+  animation: tasks-drawer-slide-in 280ms ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tasks-drawer-panel-enter {
+    animation: none;
+    transform: translateX(0);
+  }
+}
+
 /**
  * Dark workspace scrollbars: low-contrast thumb, slightly stronger on hover (slate / violet).
  * Matches app shell; avoids default bright system scrollbar.
