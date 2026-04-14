@@ -1,6 +1,7 @@
 'use client';
 
-import { useActionState, useEffect } from 'react';
+import { useActionState, useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 import { useFormStatus } from 'react-dom';
 import { createPhase } from '@/features/phases/phase-actions';
 import {
@@ -28,9 +29,18 @@ export type PhaseCreateFormProps = {
 
 export function PhaseCreateForm({ projectId, variant = 'default', onSuccess }: PhaseCreateFormProps) {
   const [state, action] = useActionState(createPhase.bind(null, projectId), undefined);
+  const prevStateRef = useRef<typeof state>(undefined);
 
   useEffect(() => {
-    if (state && 'success' in state && state.success) {
+    if (state === prevStateRef.current) return;
+    prevStateRef.current = state;
+    if (!state) return;
+    if ('error' in state && state.error) {
+      toast.error(state.error);
+      return;
+    }
+    if ('success' in state && state.success) {
+      toast.success('Phase created.');
       onSuccess?.();
     }
   }, [state, onSuccess]);
@@ -50,9 +60,6 @@ export function PhaseCreateForm({ projectId, variant = 'default', onSuccess }: P
           type="text"
         />
         <SubmitPhase label="Create" />
-        {state && 'error' in state ? (
-          <p className="w-full text-sm text-red-400">{state.error}</p>
-        ) : null}
       </form>
     );
   }
@@ -71,9 +78,6 @@ export function PhaseCreateForm({ projectId, variant = 'default', onSuccess }: P
         />
       </label>
       <SubmitPhase label="Add phase" />
-      {state && 'error' in state ? (
-        <p className="w-full text-sm text-red-400">{state.error}</p>
-      ) : null}
     </form>
   );
 }

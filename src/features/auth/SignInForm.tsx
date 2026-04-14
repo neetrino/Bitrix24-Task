@@ -1,6 +1,7 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 import { useFormStatus } from 'react-dom';
 import { signInWithEmail } from '@/features/auth/auth-actions';
 import { AUTH_PRIMARY_CTA_FORM_CLASS } from '@/shared/ui/auth-cta-classes';
@@ -16,6 +17,14 @@ function SubmitButton() {
 
 export function SignInForm() {
   const [state, formAction] = useActionState(signInWithEmail, undefined);
+  const prevStateRef = useRef<typeof state>(undefined);
+
+  useEffect(() => {
+    if (state === prevStateRef.current) return;
+    prevStateRef.current = state;
+    if (state?.error) toast.error(state.error);
+  }, [state]);
+
   return (
     <form action={formAction} className="flex w-full flex-col gap-4">
       <label className="flex flex-col gap-2 text-sm font-medium text-slate-200" htmlFor="email">
@@ -30,7 +39,6 @@ export function SignInForm() {
           autoComplete="email"
         />
       </label>
-      {state?.error ? <p className="text-sm text-red-400">{state.error}</p> : null}
       <SubmitButton />
     </form>
   );

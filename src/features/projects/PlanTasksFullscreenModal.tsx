@@ -39,8 +39,6 @@ export function PlanTasksFullscreenModal({
   onSaveEdit,
   onToggleSync,
   savePending,
-  saveNote,
-  syncNote,
   planLoading = false,
   fetchError = null,
   projectId,
@@ -67,9 +65,8 @@ export function PlanTasksFullscreenModal({
   onToggleSync: (row: FlatPlanTaskRow) => void;
   /** True while task edit save is in flight (does not block Select/Deselect). */
   savePending: boolean;
-  saveNote: string | null;
-  syncNote: string | null;
   planLoading?: boolean;
+  /** When set, plan fetch failed; details are shown via global toast. */
   fetchError?: string | null;
 }) {
   const titleId = useId();
@@ -195,13 +192,11 @@ export function PlanTasksFullscreenModal({
           </div>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
-          {saveNote ? <p className="mb-2 text-xs text-red-400">{saveNote}</p> : null}
-          {syncNote ? <p className="mb-2 text-xs text-red-400">{syncNote}</p> : null}
           {planLoading ? (
             <p className="py-12 text-center text-sm text-slate-400">Loading plan…</p>
           ) : null}
           {!planLoading && fetchError ? (
-            <p className="py-8 text-center text-sm text-red-400">{fetchError}</p>
+            <p className="py-8 text-center text-sm text-slate-400">Could not load plan for this phase.</p>
           ) : null}
           {!planLoading && !fetchError ? (
             <>

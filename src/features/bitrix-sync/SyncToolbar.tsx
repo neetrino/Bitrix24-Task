@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
+import { toast } from 'sonner';
 import { BitrixSyncConfirmDialog } from '@/features/bitrix-sync/BitrixSyncConfirmDialog';
 import { syncProjectToBitrix } from '@/features/bitrix-sync/sync-actions';
 import { WORKSPACE_GHOST_BTN_CLASS } from '@/shared/ui/workspace-ui';
@@ -26,8 +27,6 @@ export function SyncToolbar({
   variant?: SyncToolbarVariant;
 }) {
   const router = useRouter();
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -37,15 +36,13 @@ export function SyncToolbar({
     : 'rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-emerald-500 disabled:opacity-60';
 
   function run(dryRun: boolean) {
-    setMessage(null);
-    setError(null);
     start(async () => {
       const res = await syncProjectToBitrix(projectId, phaseId, dryRun);
       if ('error' in res) {
-        setError(res.error);
+        toast.error(res.error);
         return;
       }
-      setMessage(res.message);
+      toast.success(res.message);
       router.refresh();
     });
   }
@@ -99,20 +96,6 @@ export function SyncToolbar({
             </button>
           ) : null}
         </div>
-        {error ? (
-          <p className={compact ? 'max-w-[14rem] text-[11px] text-red-400' : 'text-sm text-red-400'}>
-            {error}
-          </p>
-        ) : null}
-        {message ? (
-          <p
-            className={
-              compact ? 'max-w-[14rem] text-[11px] text-emerald-400/95' : 'text-sm text-emerald-400/95'
-            }
-          >
-            {message}
-          </p>
-        ) : null}
       </div>
     </>
   );

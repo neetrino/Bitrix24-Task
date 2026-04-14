@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useOptimistic, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { sendChatMessage } from '@/features/chat/chat-actions';
 
 export type ChatMessageLine = {
@@ -75,6 +76,7 @@ export function ProjectChatSection({
 }: ProjectChatSectionProps) {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const chatErrorToastedRef = useRef<string | null>(null);
 
   const [optimisticMessages, addOptimistic] = useOptimistic(
     initialMessages,
@@ -97,9 +99,14 @@ export function ProjectChatSection({
   }, [optimisticMessages, state, isPending]);
 
   useEffect(() => {
-    if (state?.error) {
-      router.refresh();
+    if (!state?.error) {
+      chatErrorToastedRef.current = null;
+      return;
     }
+    if (chatErrorToastedRef.current === state.error) return;
+    chatErrorToastedRef.current = state.error;
+    toast.error(state.error);
+    router.refresh();
   }, [state?.error, router]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -222,7 +229,6 @@ export function ProjectChatSection({
                 value={pastedDraft}
               />
             </details>
-            {state?.error ? <p className="px-1 text-sm text-red-400">{state.error}</p> : null}
           </div>
         </div>
       </div>

@@ -13,6 +13,7 @@ import {
 import { PlanTasksFullscreenModal } from '@/features/projects/PlanTasksFullscreenModal';
 import { ProjectPlanTasksProvider } from '@/features/projects/project-plan-tasks-context';
 import { logger } from '@/shared/lib/logger';
+import { toast } from 'sonner';
 
 async function setPlanTaskSyncSelectedSafe(
   projectId: string,
@@ -58,8 +59,6 @@ export function ProjectPlanTasksHost({
   const [editing, setEditing] = useState<EditingTarget | null>(null);
   const [draftTitle, setDraftTitle] = useState('');
   const [draftDescription, setDraftDescription] = useState('');
-  const [saveNote, setSaveNote] = useState<string | null>(null);
-  const [syncNote, setSyncNote] = useState<string | null>(null);
   const [savePending, startSaveTransition] = useTransition();
 
   const planSyncKey = `${projectId}:${activePhaseId ?? 'main'}`;
@@ -101,8 +100,6 @@ export function ProjectPlanTasksHost({
       setFetchError(null);
       setSearch('');
       setEditing(null);
-      setSaveNote(null);
-      setSyncNote(null);
       setModalPhaseId(targetPhaseId);
       setModalOpen(true);
 
@@ -136,7 +133,9 @@ export function ProjectPlanTasksHost({
         phasePlanCacheRef.current.set(cacheKey, data.plan);
       } catch (e) {
         logger.error({ err: e }, 'project.plan.fetch');
-        setFetchError(e instanceof Error ? e.message : 'Could not load plan');
+        const msg = e instanceof Error ? e.message : 'Could not load plan';
+        toast.error(msg);
+        setFetchError(msg);
       } finally {
         setPlanLoading(false);
       }
@@ -151,15 +150,12 @@ export function ProjectPlanTasksHost({
     setFetchError(null);
     setSearch('');
     setEditing(null);
-    setSaveNote(null);
-    setSyncNote(null);
   }, []);
 
   const beginEdit = useCallback((row: FlatPlanTaskRow) => {
     setEditing({ epicIndex: row.epicIndex, taskIndex: row.taskIndex });
     setDraftTitle(row.task.title);
     setDraftDescription(row.task.description ?? '');
-    setSaveNote(null);
   }, []);
 
   const cancelEdit = useCallback(() => {
@@ -182,7 +178,6 @@ export function ProjectPlanTasksHost({
     const capturedDraftDescription = draftDescription;
     const prevMain = plan;
     const prevModal = modalPlan;
-    setSaveNote(null);
 
     if (modalPlan !== null) {
       setModalPlan(next);
@@ -197,7 +192,7 @@ export function ProjectPlanTasksHost({
     startSaveTransition(async () => {
       const res = await savePlanSnapshot(projectId, effectivePhaseId, JSON.stringify(next));
       if (res && 'error' in res && res.error) {
-        setSaveNote(res.error);
+        toast.error(res.error);
         if (prevModal !== null) {
           setModalPlan(prevModal);
         } else {
@@ -229,7 +224,6 @@ export function ProjectPlanTasksHost({
 
       const prevMain = plan;
       const prevModal = modalPlan;
-      setSyncNote(null);
 
       let optimisticPlan: PlanPayload;
       if (modalPlan !== null) {
@@ -250,7 +244,7 @@ export function ProjectPlanTasksHost({
           nextSelected,
         );
         if ('error' in res && res.error) {
-          setSyncNote(res.error);
+          toast.error(res.error);
           if (prevModal !== null) {
             setModalPlan(prevModal);
           } else {
@@ -287,10 +281,8 @@ export function ProjectPlanTasksHost({
         plan={effectivePlan}
         planLoading={planLoading}
         projectId={projectId}
-        saveNote={saveNote}
         savePending={savePending}
         search={search}
-        syncNote={syncNote}
       />
     </ProjectPlanTasksProvider>
   );

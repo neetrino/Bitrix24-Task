@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
+import { toast } from 'sonner';
 import type { PlanPayload } from '@/shared/domain/plan';
 import { savePlanSnapshot } from '@/features/plan-editor/plan-actions';
 import {
@@ -23,7 +24,6 @@ export function PlanEditor({
   embedded?: boolean;
 }) {
   const [json, setJson] = useState(() => JSON.stringify(initialPlan, null, 2));
-  const [note, setNote] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
   const validPreview = useMemo(() => {
@@ -35,14 +35,13 @@ export function PlanEditor({
   }, [json]);
 
   function onSave() {
-    setNote(null);
     start(async () => {
       const res = await savePlanSnapshot(projectId, phaseId, json);
       if (res && 'error' in res && res.error) {
-        setNote(res.error);
+        toast.error(res.error);
         return;
       }
-      setNote('Saved.');
+      toast.success('Plan saved.');
     });
   }
 
@@ -67,7 +66,6 @@ export function PlanEditor({
         spellCheck={false}
         value={json}
       />
-      {note ? <p className="text-sm text-slate-300">{note}</p> : null}
       {validPreview ? (
         <p className="text-xs text-slate-500">JSON parses locally. Server validates schema on save.</p>
       ) : (
