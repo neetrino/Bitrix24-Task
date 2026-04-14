@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { ProjectChatSection } from '@/features/chat/ProjectChatSection';
 import { PhasePills } from '@/features/phases/PhasePills';
+import { PROJECT_TASKS_CHAT_GRID_CLASS } from '@/features/projects/plan-tasks-layout';
 import { PlanTasksPanel } from '@/features/projects/PlanTasksPanel';
 import { ProjectBitrixSetupPanel } from '@/features/projects/ProjectBitrixSetupPanel';
 import { getProjectForUser } from '@/features/projects/project-queries';
@@ -99,10 +100,10 @@ export default async function ProjectPage({
         project={project}
       />
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[minmax(220px,280px)_minmax(0,1fr)] lg:gap-4 lg:overflow-hidden lg:-mx-6">
+      <div className={PROJECT_TASKS_CHAT_GRID_CLASS}>
         <aside className="order-2 flex min-h-0 flex-col overflow-hidden lg:order-1 lg:pl-6">
           <div className="min-h-0 flex-1 overflow-hidden">
-            <PlanTasksPanel plan={plan} />
+            <PlanTasksPanel activePhaseId={activePhaseId} plan={plan} projectId={project.id} />
           </div>
         </aside>
 
