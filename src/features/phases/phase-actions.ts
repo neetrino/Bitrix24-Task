@@ -11,7 +11,7 @@ export async function createPhase(
   projectId: string,
   _prev: unknown,
   formData: FormData,
-): Promise<{ error?: string } | void> {
+): Promise<{ error: string } | { success: true }> {
   const userId = await requireActiveUserId();
   const project = await prisma.project.findFirst({
     where: { id: projectId, ownerId: userId },
@@ -32,4 +32,5 @@ export async function createPhase(
     },
   });
   revalidatePath(`/app/projects/${project.slug}`);
+  return { success: true };
 }

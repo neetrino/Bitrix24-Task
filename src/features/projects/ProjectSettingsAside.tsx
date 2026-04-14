@@ -1,5 +1,4 @@
 import { SyncToolbar } from '@/features/bitrix-sync/SyncToolbar';
-import { PhaseCreateForm } from '@/features/phases/PhaseCreateForm';
 import { BitrixSettingsForm } from '@/features/projects/BitrixSettingsForm';
 import { ChatModelForm } from '@/features/projects/ChatModelForm';
 import { PlanEditor } from '@/features/plan-editor/PlanEditor';
@@ -34,15 +33,6 @@ export function ProjectSettingsAside({
   return (
     <aside className="flex max-h-[min(100vh-8rem,900px)] min-h-0 flex-col gap-2 overflow-y-auto pr-1">
       <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Setup</p>
-      <details className={DETAILS_CLASS}>
-        <summary className={SUMMARY_CLASS}>New phase</summary>
-        <p className={`mt-2 ${WORKSPACE_BODY_CLASS} text-xs`}>
-          Add an iteration; each phase has its own chat history and plan snapshot.
-        </p>
-        <div className="mt-3">
-          <PhaseCreateForm projectId={project.id} />
-        </div>
-      </details>
       <details className={DETAILS_CLASS}>
         <summary className={SUMMARY_CLASS}>AI model</summary>
         <div className="mt-3">

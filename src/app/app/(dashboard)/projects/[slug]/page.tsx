@@ -96,7 +96,12 @@ export default async function ProjectPage({
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:h-[calc(100vh-9.5rem)] lg:grid-cols-[minmax(240px,280px)_minmax(0,1fr)_minmax(260px,300px)] lg:gap-5 lg:overflow-hidden">
         <aside className="order-2 flex min-h-0 flex-col gap-3 overflow-hidden lg:order-1">
           <div className={`shrink-0 p-4 ${WORKSPACE_PANEL_CLASS}`}>
-            <PhasePills activePhaseId={activePhaseId} phases={phases} projectSlug={project.slug} />
+            <PhasePills
+              activePhaseId={activePhaseId}
+              phases={phases}
+              projectId={project.id}
+              projectSlug={project.slug}
+            />
           </div>
           <div className="min-h-0 flex-1 overflow-hidden">
             <PlanTasksPanel plan={plan} />
