@@ -1,0 +1,2 @@
+# Single-document YAML; avoid CRLF/merge corruption that breaks pnpm in CI.
+pnpm-lock.yaml text eol=lf merge=binary

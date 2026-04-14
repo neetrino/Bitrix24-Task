@@ -11,6 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6
+        with:
+          # Must match package.json "packageManager" — avoids lockfile parse mismatches in CI.
+          version: 9.15.4
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
