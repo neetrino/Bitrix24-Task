@@ -13,13 +13,13 @@ import { WORKSPACE_FIELD_CLASS } from '@/shared/ui/workspace-ui';
 
 type EditingTarget = { epicIndex: number; taskIndex: number };
 
+type TasksViewMode = 'grid' | 'list';
+
 export function PlanTasksFullscreenModal({
   open,
   onClose,
   plan,
   title = 'All tasks',
-  projectSlug,
-  phaseId,
   search,
   onSearchChange,
   editing,
@@ -41,8 +41,6 @@ export function PlanTasksFullscreenModal({
   onClose: () => void;
   plan: PlanPayload;
   title?: string;
-  projectSlug: string;
-  phaseId: string | null;
   search: string;
   onSearchChange: (value: string) => void;
   editing: EditingTarget | null;
@@ -62,14 +60,11 @@ export function PlanTasksFullscreenModal({
 }) {
   const titleId = useId();
   const searchId = useId();
+  const tasksLayoutRegionId = useId();
   const [mounted, setMounted] = useState(false);
+  const [viewMode, setViewMode] = useState<TasksViewMode>('grid');
   const rows = useMemo(() => buildFlatPlanTasks(plan), [plan]);
   const filtered = useMemo(() => filterFlatPlanTasks(rows, search), [rows, search]);
-  const taskPhaseHref = useMemo(() => {
-    const base = `/app/projects/${projectSlug}`;
-    const phaseQ = phaseId ? `?phase=${phaseId}` : '';
-    return `${base}${phaseQ}`;
-  }, [phaseId, projectSlug]);
 
   useEffect(() => {
     setMounted(true);
@@ -125,18 +120,52 @@ export function PlanTasksFullscreenModal({
               Close
             </button>
           </div>
-          <div className="min-w-0">
-            <label className="sr-only" htmlFor={searchId}>
-              Search tasks
-            </label>
-            <input
-              className={`w-full ${WORKSPACE_FIELD_CLASS} text-xs`}
-              id={searchId}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search tasks…"
-              type="search"
-              value={search}
-            />
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <div className="min-w-0 flex-1">
+              <label className="sr-only" htmlFor={searchId}>
+                Search tasks
+              </label>
+              <input
+                className={`w-full ${WORKSPACE_FIELD_CLASS} text-xs`}
+                id={searchId}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="Search tasks…"
+                type="search"
+                value={search}
+              />
+            </div>
+            <div
+              className="flex shrink-0 rounded-lg border border-white/10 bg-slate-900/80 p-0.5"
+              role="group"
+              aria-label="Task layout"
+            >
+              <button
+                aria-controls={tasksLayoutRegionId}
+                aria-pressed={viewMode === 'grid'}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
+                  viewMode === 'grid'
+                    ? 'bg-white/10 text-white ring-1 ring-white/15'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                onClick={() => setViewMode('grid')}
+                type="button"
+              >
+                Grid
+              </button>
+              <button
+                aria-controls={tasksLayoutRegionId}
+                aria-pressed={viewMode === 'list'}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
+                  viewMode === 'list'
+                    ? 'bg-white/10 text-white ring-1 ring-white/15'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                onClick={() => setViewMode('list')}
+                type="button"
+              >
+                List
+              </button>
+            </div>
           </div>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
@@ -150,7 +179,14 @@ export function PlanTasksFullscreenModal({
           ) : null}
           {!planLoading && !fetchError ? (
             <>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div
+                className={
+                  viewMode === 'grid'
+                    ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4'
+                    : 'flex flex-col gap-2'
+                }
+                id={tasksLayoutRegionId}
+              >
                 {filtered.map((row) => {
                   const isEditing =
                     editing?.epicIndex === row.epicIndex && editing?.taskIndex === row.taskIndex;
@@ -164,13 +200,11 @@ export function PlanTasksFullscreenModal({
                       onCancelEdit={onCancelEdit}
                       onDraftDescriptionChange={onDraftDescriptionChange}
                       onDraftTitleChange={onDraftTitleChange}
-                      onNavigateTask={onClose}
                       onSaveEdit={onSaveEdit}
                       onToggleSync={() => onToggleSync(row)}
                       pending={pending}
                       row={row}
-                      taskHref={taskPhaseHref}
-                      variant="grid"
+                      variant={viewMode === 'grid' ? 'grid' : 'list'}
                     />
                   );
                 })}

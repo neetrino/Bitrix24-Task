@@ -196,10 +196,8 @@ export function ProjectPlanTasksHost({
         onToggleSync={toggleRowBitrixSync}
         open={modalOpen}
         pending={pending}
-        phaseId={effectivePhaseId}
         plan={effectivePlan}
         planLoading={planLoading}
-        projectSlug={projectSlug}
         saveNote={saveNote}
         search={search}
         syncNote={syncNote}

@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import {
   WORKSPACE_FIELD_CLASS,
   WORKSPACE_GHOST_BTN_CLASS,
@@ -11,6 +10,9 @@ const LIST_WRAP =
   'rounded-lg border px-2 py-1.5 outline-none transition focus-visible:ring-2 focus-visible:ring-emerald-500/40';
 const GRID_WRAP =
   'rounded-xl border px-3 py-3 shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-emerald-500/40';
+
+const CHECKBOX_WRAP_CLASS =
+  'shrink-0 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100';
 
 export function PlanTaskRowCard({
   row,
@@ -25,8 +27,6 @@ export function PlanTaskRowCard({
   onSaveEdit,
   onToggleSync,
   pending,
-  taskHref,
-  onNavigateTask,
 }: {
   row: FlatPlanTaskRow;
   variant: 'list' | 'grid';
@@ -40,9 +40,6 @@ export function PlanTaskRowCard({
   onSaveEdit: () => void;
   onToggleSync: () => void;
   pending: boolean;
-  /** When set, shows an “Open” link (e.g. same project page + `#task-e-t`). */
-  taskHref?: string;
-  onNavigateTask?: () => void;
 }) {
   if (isEditing) {
     return (
@@ -80,78 +77,68 @@ export function PlanTaskRowCard({
     );
   }
 
-  const wrapClass =
-    variant === 'list' ? LIST_WRAP : GRID_WRAP;
-  const selected = isTaskSyncChecked(row.task);
-  const stateClass = selected
+  const wrapClass = variant === 'list' ? LIST_WRAP : GRID_WRAP;
+  const syncSelected = isTaskSyncChecked(row.task);
+  const stateClass = syncSelected
     ? 'cursor-pointer border-emerald-500/40 bg-emerald-500/[0.12] hover:bg-emerald-500/[0.16]'
     : 'cursor-pointer border-white/[0.08] bg-slate-900/50 hover:bg-slate-800/60';
 
   return (
     <div
-      aria-pressed={selected}
-      className={`${wrapClass} ${stateClass} ${pending ? 'pointer-events-none opacity-70' : ''}`}
-      onClick={onToggleSync}
+      className={`group relative ${wrapClass} ${stateClass} ${pending ? 'pointer-events-none opacity-70' : ''}`}
+      onClick={() => {
+        if (pending) return;
+        onBeginEdit();
+      }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          onToggleSync();
+          if (!pending) onBeginEdit();
         }
       }}
       role="button"
       tabIndex={0}
-      title={
-        selected
-          ? 'Selected for Bitrix sync — click to exclude'
-          : 'Not selected for Bitrix sync — click to include'
-      }
+      title="Click to edit. Use the checkbox to include or exclude from Bitrix sync."
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <p className="flex min-w-0 flex-1 flex-wrap items-baseline gap-2 text-sm text-slate-200">
-          <span className="shrink-0 tabular-nums font-mono text-[10px] font-medium text-slate-500">
-            {row.displayNumber}
-          </span>
-          {row.task.bitrixSynced ? (
-            <span
-              className="shrink-0 rounded border border-emerald-500/35 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-300/95"
-              title="This task was pushed to Bitrix"
-            >
-              Bitrix
-            </span>
-          ) : null}
-          <span
-            className={
-              variant === 'grid'
-                ? 'min-w-0 font-medium leading-snug text-slate-100'
-                : 'min-w-0'
-            }
-          >
-            {row.task.title}
-          </span>
-        </p>
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-          {taskHref ? (
-            <Link
-              className="rounded border border-white/12 px-2 py-0.5 text-[10px] font-medium text-slate-300 transition hover:border-white/20 hover:text-white"
-              href={taskHref}
-              onClick={(e) => {
+        <div className="flex min-w-0 flex-1 items-start gap-2">
+          <div className={`flex shrink-0 items-center pt-0.5 ${CHECKBOX_WRAP_CLASS}`}>
+            <input
+              aria-label={
+                syncSelected ? 'Included in Bitrix sync — click to exclude' : 'Not included in Bitrix sync — click to include'
+              }
+              checked={syncSelected}
+              className="h-3.5 w-3.5 cursor-pointer rounded border-white/25 bg-slate-900 text-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+              onChange={(e) => {
                 e.stopPropagation();
-                onNavigateTask?.();
+                onToggleSync();
               }}
+              onClick={(e) => e.stopPropagation()}
+              type="checkbox"
+            />
+          </div>
+          <p className="flex min-w-0 flex-1 flex-wrap items-baseline gap-2 text-sm text-slate-200">
+            <span className="shrink-0 tabular-nums font-mono text-[10px] font-medium text-slate-500">
+              {row.displayNumber}
+            </span>
+            {row.task.bitrixSynced ? (
+              <span
+                className="shrink-0 rounded border border-emerald-500/35 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-300/95"
+                title="This task was pushed to Bitrix"
+              >
+                Bitrix
+              </span>
+            ) : null}
+            <span
+              className={
+                variant === 'grid'
+                  ? 'min-w-0 font-medium leading-snug text-slate-100'
+                  : 'min-w-0'
+              }
             >
-              Open
-            </Link>
-          ) : null}
-          <button
-            className="shrink-0 rounded border border-white/12 px-2 py-0.5 text-[10px] font-medium text-slate-400 transition hover:border-white/20 hover:text-slate-200"
-            onClick={(e) => {
-              e.stopPropagation();
-              onBeginEdit();
-            }}
-            type="button"
-          >
-            Edit
-          </button>
+              {row.task.title}
+            </span>
+          </p>
         </div>
       </div>
       {row.task.description ? (
@@ -161,9 +148,7 @@ export function PlanTaskRowCard({
           {row.task.description}
         </p>
       ) : null}
-      {variant === 'grid' ? (
-        <p className="mt-2 truncate text-[10px] uppercase tracking-wide text-slate-600">{row.epicName}</p>
-      ) : null}
+      <p className="mt-2 truncate text-[10px] uppercase tracking-wide text-slate-600">{row.epicName}</p>
     </div>
   );
 }
