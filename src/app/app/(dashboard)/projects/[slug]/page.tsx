@@ -10,7 +10,16 @@ import { ChatModelForm } from '@/features/projects/ChatModelForm';
 import { DEFAULT_PLAN, parsePlanFromJson, type PlanPayload } from '@/shared/domain/plan';
 import { getEffectiveChatModel } from '@/shared/lib/openai-model';
 import { prisma } from '@/shared/lib/prisma';
-import { requireSessionUserId } from '@/shared/lib/session';
+import { requireActiveUserId } from '@/shared/lib/session';
+import {
+  WORKSPACE_BODY_CLASS,
+  WORKSPACE_CODE_CLASS,
+  WORKSPACE_GHOST_BTN_CLASS,
+  WORKSPACE_H2_CLASS,
+  WORKSPACE_INNER_SCROLL_CLASS,
+  WORKSPACE_LINK_CLASS,
+  WORKSPACE_PANEL_CLASS,
+} from '@/shared/ui/workspace-ui';
 
 function resolvePlanPayload(snapshotPayload: unknown | null): PlanPayload {
   if (!snapshotPayload) return DEFAULT_PLAN;
@@ -30,7 +39,7 @@ export default async function ProjectPage({
 }) {
   const { slug } = await params;
   const { phase: phaseParam } = await searchParams;
-  const userId = await requireSessionUserId();
+  const userId = await requireActiveUserId();
   const project = await getProjectForUser(slug, userId);
   if (!project) {
     notFound();
@@ -75,14 +84,13 @@ export default async function ProjectPage({
   return (
     <div className="flex flex-col gap-10">
       <div className="flex flex-col gap-2">
-        <Link className="text-sm text-slate-600 hover:text-slate-900" href="/app">
+        <Link className={WORKSPACE_LINK_CLASS} href="/app">
           ← All projects
         </Link>
-        <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
-        <p className="text-sm text-slate-600">
+        <h1 className="text-2xl font-semibold tracking-tight text-white">{project.name}</h1>
+        <p className={WORKSPACE_BODY_CLASS}>
           Chat refines the plan; export Markdown or YAML anytime. Sync uses server{' '}
-          <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">Webhook_URL</code> plus the
-          Bitrix ids below.
+          <code className={WORKSPACE_CODE_CLASS}>Webhook_URL</code> plus the Bitrix ids below.
         </p>
       </div>
 
@@ -93,9 +101,9 @@ export default async function ProjectPage({
         projectSlug={project.slug}
       />
 
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">AI model</h2>
-        <p className="mt-1 text-sm text-slate-600">
+      <section className={`${WORKSPACE_PANEL_CLASS} p-6`}>
+        <h2 className={WORKSPACE_H2_CLASS}>AI model</h2>
+        <p className={`mt-1 ${WORKSPACE_BODY_CLASS}`}>
           Pick an OpenAI model for this project. Labels describe typical cost vs capability (see OpenAI
           pricing for your account).
         </p>
@@ -104,9 +112,9 @@ export default async function ProjectPage({
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">Bitrix settings</h2>
-        <p className="mt-1 text-sm text-slate-600">
+      <section className={`${WORKSPACE_PANEL_CLASS} p-6`}>
+        <h2 className={WORKSPACE_H2_CLASS}>Bitrix settings</h2>
+        <p className={`mt-1 ${WORKSPACE_BODY_CLASS}`}>
           Stored per project; webhook stays in deployment secrets.
         </p>
         <div className="mt-4">
@@ -114,25 +122,24 @@ export default async function ProjectPage({
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">Export</h2>
-        <p className="mt-1 text-sm text-slate-600">Download the latest saved plan for this phase.</p>
+      <section className={`${WORKSPACE_PANEL_CLASS} p-6`}>
+        <h2 className={WORKSPACE_H2_CLASS}>Export</h2>
+        <p className={`mt-1 ${WORKSPACE_BODY_CLASS}`}>
+          Download the latest saved plan for this phase.
+        </p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <a className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-800 hover:bg-slate-50" href={exportMd}>
+          <a className={WORKSPACE_GHOST_BTN_CLASS} href={exportMd}>
             Download Markdown
           </a>
-          <a
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-800 hover:bg-slate-50"
-            href={exportYaml}
-          >
+          <a className={WORKSPACE_GHOST_BTN_CLASS} href={exportYaml}>
             Download YAML
           </a>
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">Bitrix sync</h2>
-        <p className="mt-1 text-sm text-slate-600">
+      <section className={`${WORKSPACE_PANEL_CLASS} p-6`}>
+        <h2 className={WORKSPACE_H2_CLASS}>Bitrix sync</h2>
+        <p className={`mt-1 ${WORKSPACE_BODY_CLASS}`}>
           Dry-run logs intent; real sync creates tasks via the incoming webhook for the active phase
           plan.
         </p>
@@ -141,19 +148,19 @@ export default async function ProjectPage({
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">AI chat</h2>
+      <section className={`${WORKSPACE_PANEL_CLASS} p-6`}>
+        <h2 className={WORKSPACE_H2_CLASS}>AI chat</h2>
         <div className="mt-4 flex flex-col gap-4">
-          <ul className="max-h-80 space-y-3 overflow-y-auto rounded-md border border-slate-100 bg-slate-50 p-4 text-sm">
+          <ul className={WORKSPACE_INNER_SCROLL_CLASS}>
             {messages.length === 0 ? (
-              <li className="text-slate-600">No messages yet. Start by describing the initiative.</li>
+              <li className="text-slate-400">No messages yet. Start by describing the initiative.</li>
             ) : (
               messages.map((m) => (
                 <li key={m.id}>
-                  <span className="font-medium text-slate-800">
+                  <span className="font-medium text-violet-200/90">
                     {m.role === 'user' ? 'You' : 'Assistant'}:
                   </span>{' '}
-                  <span className="whitespace-pre-wrap text-slate-700">{m.content}</span>
+                  <span className="whitespace-pre-wrap text-slate-300">{m.content}</span>
                 </li>
               ))
             )}
@@ -166,7 +173,7 @@ export default async function ProjectPage({
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <section className={`${WORKSPACE_PANEL_CLASS} p-6`}>
         <PlanEditor initialPlan={plan} phaseId={activePhaseId} projectId={project.id} />
       </section>
     </div>

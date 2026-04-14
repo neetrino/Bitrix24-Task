@@ -1,19 +1,19 @@
 import { stringify } from 'yaml';
-import { auth } from '@/auth';
 import { DEFAULT_PLAN, parsePlanFromJson } from '@/shared/domain/plan';
 import { planToMarkdown } from '@/shared/lib/plan-markdown';
 import { prisma } from '@/shared/lib/prisma';
+import { requireActiveUserForApi } from '@/shared/lib/session';
 
 export async function GET(
   req: Request,
   context: { params: Promise<{ slug: string }> },
 ): Promise<Response> {
   const { slug } = await context.params;
-  const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const authResult = await requireActiveUserForApi();
+  if ('error' in authResult) {
+    return authResult.error;
   }
+  const { userId } = authResult;
 
   const project = await prisma.project.findFirst({
     where: { slug, ownerId: userId },

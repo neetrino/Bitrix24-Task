@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { prisma } from '@/shared/lib/prisma';
-import { requireSessionUserId } from '@/shared/lib/session';
+import { requireActiveUserId } from '@/shared/lib/session';
 
 const labelSchema = z.string().min(1).max(200);
 
@@ -12,7 +12,7 @@ export async function createPhase(
   _prev: unknown,
   formData: FormData,
 ): Promise<{ error?: string } | void> {
-  const userId = await requireSessionUserId();
+  const userId = await requireActiveUserId();
   const project = await prisma.project.findFirst({
     where: { id: projectId, ownerId: userId },
   });

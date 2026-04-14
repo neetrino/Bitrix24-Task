@@ -9,12 +9,19 @@ datasource db {
 
 // Auth.js — https://authjs.dev/getting-started/adapters/prisma
 
+enum AccessStatus {
+  PENDING
+  ACTIVE
+}
+
 model User {
-  id            String    @id @default(cuid())
+  id            String        @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?       @unique
   emailVerified DateTime?
   image         String?
+  /// New signups are PENDING until an operator sets ACTIVE in the database.
+  accessStatus  AccessStatus  @default(PENDING)
   accounts      Account[]
   sessions      Session[]
   projects      Project[]

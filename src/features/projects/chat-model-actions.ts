@@ -4,10 +4,10 @@ import { revalidatePath } from 'next/cache';
 import { logger } from '@/shared/lib/logger';
 import { isAllowedChatModelId } from '@/shared/lib/openai-model';
 import { prisma } from '@/shared/lib/prisma';
-import { requireSessionUserId } from '@/shared/lib/session';
+import { requireActiveUserId } from '@/shared/lib/session';
 
 export async function updateProjectChatModel(projectId: string, formData: FormData): Promise<void> {
-  const userId = await requireSessionUserId();
+  const userId = await requireActiveUserId();
   const project = await prisma.project.findFirst({
     where: { id: projectId, ownerId: userId },
   });

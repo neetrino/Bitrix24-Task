@@ -1,6 +1,13 @@
 import Link from 'next/link';
 import type { Phase } from '@prisma/client';
 import { PhaseCreateForm } from '@/features/phases/PhaseCreateForm';
+import {
+  WORKSPACE_BODY_CLASS,
+  WORKSPACE_H2_CLASS,
+  WORKSPACE_PANEL_CLASS,
+  WORKSPACE_PHASE_ACTIVE_CLASS,
+  WORKSPACE_PHASE_IDLE_CLASS,
+} from '@/shared/ui/workspace-ui';
 
 export function PhaseSection({
   projectId,
@@ -14,29 +21,23 @@ export function PhaseSection({
   activePhaseId: string | null;
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-lg font-semibold">Phases</h2>
-      <p className="mt-1 text-sm text-slate-600">
+    <section className={`${WORKSPACE_PANEL_CLASS} p-6`}>
+      <h2 className={WORKSPACE_H2_CLASS}>Phases</h2>
+      <p className={`mt-1 ${WORKSPACE_BODY_CLASS}`}>
         Scope chat and plan snapshots per iteration. Main uses no phase id.
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         <Link
-          className={`rounded-full px-3 py-1 text-sm ${
-            activePhaseId === null
-              ? 'bg-slate-900 text-white'
-              : 'border border-slate-300 text-slate-800 hover:bg-slate-50'
-          }`}
+          className={activePhaseId === null ? WORKSPACE_PHASE_ACTIVE_CLASS : WORKSPACE_PHASE_IDLE_CLASS}
           href={`/app/projects/${projectSlug}`}
         >
           Main
         </Link>
         {phases.map((p) => (
           <Link
-            className={`rounded-full px-3 py-1 text-sm ${
-              activePhaseId === p.id
-                ? 'bg-slate-900 text-white'
-                : 'border border-slate-300 text-slate-800 hover:bg-slate-50'
-            }`}
+            className={
+              activePhaseId === p.id ? WORKSPACE_PHASE_ACTIVE_CLASS : WORKSPACE_PHASE_IDLE_CLASS
+            }
             href={`/app/projects/${projectSlug}?phase=${p.id}`}
             key={p.id}
           >
@@ -44,7 +45,7 @@ export function PhaseSection({
           </Link>
         ))}
       </div>
-      <div className="mt-6 border-t border-slate-100 pt-6">
+      <div className="mt-6 border-t border-white/10 pt-6">
         <PhaseCreateForm projectId={projectId} />
       </div>
     </section>

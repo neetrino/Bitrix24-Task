@@ -80,7 +80,7 @@
 | 5.1 | Solution | Auth.js (NextAuth v5) | ✅ | |
 | 5.2 | Providers | Email magic link + Google (optional) | ⬜ | **Confirm providers** |
 | 5.3 | Sessions | Database sessions via Prisma adapter | ✅ | |
-| 5.4 | Roles / RBAC | `USER` (v1); `ADMIN` optional later | ⬜ | |
+| 5.4 | Access control | `User.accessStatus`: `PENDING` (default) / `ACTIVE` (set in DB); app + APIs require `ACTIVE` | ✅ | |
 | 5.5 | Email verification | As required by provider | ⬜ | Resend if magic link |
 | 5.6 | Password reset | N/A if passwordless only | ⬜ | |
 

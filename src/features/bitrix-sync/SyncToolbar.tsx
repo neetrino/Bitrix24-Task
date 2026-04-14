@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { syncProjectToBitrix } from '@/features/bitrix-sync/sync-actions';
+import { WORKSPACE_GHOST_BTN_CLASS } from '@/shared/ui/workspace-ui';
 
 export function SyncToolbar({
   projectId,
@@ -31,7 +32,7 @@ export function SyncToolbar({
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-2">
         <button
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-800 hover:bg-slate-50 disabled:opacity-60"
+          className={WORKSPACE_GHOST_BTN_CLASS}
           disabled={pending}
           onClick={() => run(true)}
           type="button"
@@ -39,7 +40,7 @@ export function SyncToolbar({
           Dry-run sync
         </button>
         <button
-          className="rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-60"
+          className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-emerald-500 disabled:opacity-60"
           disabled={pending}
           onClick={() => run(false)}
           type="button"
@@ -47,8 +48,8 @@ export function SyncToolbar({
           {pending ? 'Syncing…' : 'Sync to Bitrix'}
         </button>
       </div>
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      {message ? <p className="text-sm text-emerald-800">{message}</p> : null}
+      {error ? <p className="text-sm text-red-400">{error}</p> : null}
+      {message ? <p className="text-sm text-emerald-400/95">{message}</p> : null}
     </div>
   );
 }

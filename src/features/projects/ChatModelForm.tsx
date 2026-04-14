@@ -4,6 +4,12 @@ import {
   getEffectiveChatModel,
   OPENAI_CHAT_MODEL_OPTIONS,
 } from '@/shared/lib/openai-model';
+import {
+  WORKSPACE_ACCENT_BTN_CLASS,
+  WORKSPACE_BODY_CLASS,
+  WORKSPACE_FIELD_CLASS,
+  WORKSPACE_LABEL_CLASS,
+} from '@/shared/ui/workspace-ui';
 
 type ProjectModelFields = {
   id: string;
@@ -16,15 +22,16 @@ export function ChatModelForm({ project }: { project: ProjectModelFields }) {
 
   return (
     <form action={updateProjectChatModel.bind(null, project.id)} className="flex flex-col gap-3">
-      <p className="text-sm text-slate-600">
+      <p className={WORKSPACE_BODY_CLASS}>
         Choose one model for AI chat on this project. The default recommendation is{' '}
-        <strong>{DEFAULT_CHAT_MODEL_ID}</strong> (preselected for new projects).
+        <strong className="text-slate-200">{DEFAULT_CHAT_MODEL_ID}</strong> (preselected for new
+        projects).
       </p>
-      <label className="text-sm font-medium text-slate-700" htmlFor={selectId}>
+      <label className={WORKSPACE_LABEL_CLASS} htmlFor={selectId}>
         Model
       </label>
       <select
-        className="max-w-xl rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200"
+        className={`max-w-xl ${WORKSPACE_FIELD_CLASS}`}
         defaultValue={effective}
         id={selectId}
         name="openaiChatModel"
@@ -37,10 +44,7 @@ export function ChatModelForm({ project }: { project: ProjectModelFields }) {
         ))}
       </select>
       <div className="flex justify-end">
-        <button
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-          type="submit"
-        >
+        <button className={WORKSPACE_ACCENT_BTN_CLASS} type="submit">
           Save model
         </button>
       </div>

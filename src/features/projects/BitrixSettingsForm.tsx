@@ -1,4 +1,9 @@
 import { updateProjectBitrix } from '@/features/projects/project-actions';
+import {
+  WORKSPACE_ACCENT_BTN_CLASS,
+  WORKSPACE_FIELD_CLASS,
+  WORKSPACE_LABEL_CLASS,
+} from '@/shared/ui/workspace-ui';
 
 type ProjectBitrixFields = {
   id: string;
@@ -11,10 +16,10 @@ export function BitrixSettingsForm({ project }: { project: ProjectBitrixFields }
   return (
     <form action={updateProjectBitrix.bind(null, project.id)} className="flex flex-col gap-3">
       <div className="grid gap-3 sm:grid-cols-3">
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-700" htmlFor="bitrixProjectId">
+        <label className={`flex flex-col gap-1 ${WORKSPACE_LABEL_CLASS}`} htmlFor="bitrixProjectId">
           Bitrix project / group id
           <input
-            className="rounded-md border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200"
+            className={WORKSPACE_FIELD_CLASS}
             defaultValue={project.bitrixProjectId ?? ''}
             id="bitrixProjectId"
             name="bitrixProjectId"
@@ -22,10 +27,10 @@ export function BitrixSettingsForm({ project }: { project: ProjectBitrixFields }
             type="text"
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-700" htmlFor="taskOwnerId">
+        <label className={`flex flex-col gap-1 ${WORKSPACE_LABEL_CLASS}`} htmlFor="taskOwnerId">
           Task owner id (CREATED_BY)
           <input
-            className="rounded-md border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200"
+            className={WORKSPACE_FIELD_CLASS}
             defaultValue={project.taskOwnerId ?? ''}
             id="taskOwnerId"
             name="taskOwnerId"
@@ -33,10 +38,10 @@ export function BitrixSettingsForm({ project }: { project: ProjectBitrixFields }
             type="text"
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm font-medium text-slate-700" htmlFor="taskAssigneeId">
+        <label className={`flex flex-col gap-1 ${WORKSPACE_LABEL_CLASS}`} htmlFor="taskAssigneeId">
           Task assignee id (RESPONSIBLE_ID)
           <input
-            className="rounded-md border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200"
+            className={WORKSPACE_FIELD_CLASS}
             defaultValue={project.taskAssigneeId ?? ''}
             id="taskAssigneeId"
             name="taskAssigneeId"
@@ -46,10 +51,7 @@ export function BitrixSettingsForm({ project }: { project: ProjectBitrixFields }
         </label>
       </div>
       <div className="flex justify-end">
-        <button
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-          type="submit"
-        >
+        <button className={WORKSPACE_ACCENT_BTN_CLASS} type="submit">
           Save Bitrix settings
         </button>
       </div>

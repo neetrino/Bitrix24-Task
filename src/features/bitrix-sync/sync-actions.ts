@@ -6,7 +6,7 @@ import { parsePlan } from '@/server/bitrix/parse-plan';
 import { runSyncPlan } from '@/server/bitrix/sync';
 import { prisma } from '@/shared/lib/prisma';
 import { enforceRateLimit } from '@/shared/lib/rate-limit';
-import { requireSessionUserId } from '@/shared/lib/session';
+import { requireActiveUserId } from '@/shared/lib/session';
 import { logger } from '@/shared/lib/logger';
 
 export async function syncProjectToBitrix(
@@ -14,7 +14,7 @@ export async function syncProjectToBitrix(
   phaseId: string | null,
   dryRun: boolean,
 ): Promise<{ ok: true; message: string } | { error: string }> {
-  const userId = await requireSessionUserId();
+  const userId = await requireActiveUserId();
   await enforceRateLimit(`sync:${userId}`);
 
   const project = await prisma.project.findFirst({

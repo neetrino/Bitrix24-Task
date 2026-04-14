@@ -1,4 +1,5 @@
 import { PrismaAdapter } from '@auth/prisma-adapter';
+import { AccessStatus } from '@prisma/client';
 import NextAuth from 'next-auth';
 import Email from 'next-auth/providers/email';
 import { Resend } from 'resend';
@@ -16,9 +17,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     verifyRequest: '/auth/verify',
   },
   callbacks: {
-    session({ session, user }) {
+    async session({ session, user }) {
       if (session.user) {
         session.user.id = user.id;
+        const row = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { accessStatus: true },
+        });
+        session.user.accessStatus = row?.accessStatus ?? AccessStatus.PENDING;
       }
       return session;
     },

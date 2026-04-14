@@ -9,7 +9,7 @@ import { logger } from '@/shared/lib/logger';
 import { prisma } from '@/shared/lib/prisma';
 import { getEffectiveChatModel } from '@/shared/lib/openai-model';
 import { enforceRateLimit } from '@/shared/lib/rate-limit';
-import { requireSessionUserId } from '@/shared/lib/session';
+import { requireActiveUserId } from '@/shared/lib/session';
 
 const chatResponseSchema = z.object({
   assistant_message: z.string(),
@@ -22,7 +22,7 @@ export async function sendChatMessage(
   _prev: unknown,
   formData: FormData,
 ): Promise<{ error?: string } | void> {
-  const userId = await requireSessionUserId();
+  const userId = await requireActiveUserId();
   await enforceRateLimit(`chat:${userId}`);
 
   const text = formData.get('message');

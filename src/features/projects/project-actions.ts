@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { logger } from '@/shared/lib/logger';
 import { prisma } from '@/shared/lib/prisma';
-import { requireSessionUserId } from '@/shared/lib/session';
+import { requireActiveUserId } from '@/shared/lib/session';
 import { slugify } from '@/shared/lib/slug';
 
 const createSchema = z.object({
@@ -18,7 +18,7 @@ const bitrixSchema = z.object({
 });
 
 export async function createProject(formData: FormData): Promise<void> {
-  const userId = await requireSessionUserId();
+  const userId = await requireActiveUserId();
   const parsed = createSchema.safeParse({ name: formData.get('name') });
   if (!parsed.success) {
     logger.warn({ issues: parsed.error.flatten() }, 'createProject validation failed');
@@ -40,7 +40,7 @@ export async function createProject(formData: FormData): Promise<void> {
 }
 
 export async function updateProjectBitrix(projectId: string, formData: FormData): Promise<void> {
-  const userId = await requireSessionUserId();
+  const userId = await requireActiveUserId();
   const project = await prisma.project.findFirst({
     where: { id: projectId, ownerId: userId },
   });

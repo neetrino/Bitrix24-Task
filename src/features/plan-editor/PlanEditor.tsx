@@ -3,6 +3,12 @@
 import { useMemo, useState, useTransition } from 'react';
 import type { PlanPayload } from '@/shared/domain/plan';
 import { savePlanSnapshot } from '@/features/plan-editor/plan-actions';
+import {
+  WORKSPACE_BODY_CLASS,
+  WORKSPACE_FIELD_CLASS,
+  WORKSPACE_GHOST_BTN_CLASS,
+  WORKSPACE_H2_CLASS,
+} from '@/shared/ui/workspace-ui';
 
 export function PlanEditor({
   projectId,
@@ -40,30 +46,25 @@ export function PlanEditor({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">Plan</h2>
-        <button
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-800 hover:bg-slate-50 disabled:opacity-60"
-          disabled={pending}
-          onClick={onSave}
-          type="button"
-        >
+        <h2 className={WORKSPACE_H2_CLASS}>Plan</h2>
+        <button className={WORKSPACE_GHOST_BTN_CLASS} disabled={pending} onClick={onSave} type="button">
           {pending ? 'Saving…' : 'Save plan'}
         </button>
       </div>
-      <p className="text-sm text-slate-600">
+      <p className={WORKSPACE_BODY_CLASS}>
         Edit the structured JSON (validated on save). AI chat updates this automatically.
       </p>
       <textarea
-        className="min-h-[220px] w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200"
+        className={`min-h-[220px] w-full font-mono ${WORKSPACE_FIELD_CLASS}`}
         onChange={(e) => setJson(e.target.value)}
         spellCheck={false}
         value={json}
       />
-      {note ? <p className="text-sm text-slate-700">{note}</p> : null}
+      {note ? <p className="text-sm text-slate-300">{note}</p> : null}
       {validPreview ? (
         <p className="text-xs text-slate-500">JSON parses locally. Server validates schema on save.</p>
       ) : (
-        <p className="text-xs text-red-600">Invalid JSON — fix before saving.</p>
+        <p className="text-xs text-red-400">Invalid JSON — fix before saving.</p>
       )}
     </div>
   );

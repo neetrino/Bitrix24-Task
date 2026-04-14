@@ -3,14 +3,14 @@
 import { revalidatePath } from 'next/cache';
 import { parsePlanFromJson } from '@/shared/domain/plan';
 import { prisma } from '@/shared/lib/prisma';
-import { requireSessionUserId } from '@/shared/lib/session';
+import { requireActiveUserId } from '@/shared/lib/session';
 
 export async function savePlanSnapshot(
   projectId: string,
   phaseId: string | null,
   rawPlanJson: string,
 ): Promise<{ error?: string } | void> {
-  const userId = await requireSessionUserId();
+  const userId = await requireActiveUserId();
   const project = await prisma.project.findFirst({
     where: { id: projectId, ownerId: userId },
   });
