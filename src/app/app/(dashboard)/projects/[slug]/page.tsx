@@ -1,8 +1,9 @@
 import { notFound } from 'next/navigation';
 import { ProjectChatSection } from '@/features/chat/ProjectChatSection';
-import { PhasePills } from '@/features/phases/PhasePills';
+import { PhaseSidebarNav } from '@/features/phases/PhaseSidebarNav';
 import { PROJECT_TASKS_CHAT_GRID_CLASS } from '@/features/projects/plan-tasks-layout';
 import { PlanTasksPanel } from '@/features/projects/PlanTasksPanel';
+import { ProjectPlanMeta } from '@/features/projects/ProjectPlanMeta';
 import { ProjectBitrixSetupPanel } from '@/features/projects/ProjectBitrixSetupPanel';
 import { getProjectForUser } from '@/features/projects/project-queries';
 import { DEFAULT_PLAN, parsePlanFromJson, type PlanPayload } from '@/shared/domain/plan';
@@ -77,21 +78,6 @@ export default async function ProjectPage({
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden">
-      <header className="relative flex min-w-0 shrink-0 flex-col items-center gap-2 sm:min-h-[3.25rem] sm:justify-center sm:gap-0 sm:py-0.5">
-        <h1 className="w-full min-w-0 max-w-full truncate text-center text-2xl font-semibold tracking-tight text-white sm:max-w-[min(100%,calc(100%-11rem))] sm:px-2 sm:text-3xl">
-          {project.name}
-        </h1>
-        <div className="flex w-full min-w-0 justify-center sm:absolute sm:inset-y-0 sm:right-0 sm:z-10 sm:w-auto sm:max-w-[min(100%,28rem)] sm:items-center sm:justify-end">
-          <PhasePills
-            activePhaseId={activePhaseId}
-            phases={phases}
-            projectId={project.id}
-            projectSlug={project.slug}
-            showLabel={false}
-          />
-        </div>
-      </header>
-
       <div className="shrink-0">
         <ProjectBitrixSetupPanel
           activePhaseId={activePhaseId}
@@ -103,9 +89,21 @@ export default async function ProjectPage({
       </div>
 
       <div className={PROJECT_TASKS_CHAT_GRID_CLASS}>
-        <aside className="order-2 flex min-h-0 flex-col overflow-hidden lg:order-1 lg:pl-6">
-          <div className="min-h-0 flex-1 overflow-hidden">
-            <PlanTasksPanel activePhaseId={activePhaseId} plan={plan} projectId={project.id} />
+        <aside className="order-2 flex min-h-0 flex-col overflow-hidden lg:order-1 lg:border-r lg:border-white/10 lg:pl-6">
+          <ProjectPlanMeta plan={plan} projectName={project.name} />
+          <PhaseSidebarNav
+            activePhaseId={activePhaseId}
+            phases={phases}
+            projectId={project.id}
+            projectSlug={project.slug}
+          />
+          <div className="min-h-0 flex-1 overflow-hidden pt-1">
+            <PlanTasksPanel
+              activePhaseId={activePhaseId}
+              plan={plan}
+              projectId={project.id}
+              showPlanHeader={false}
+            />
           </div>
         </aside>
 
