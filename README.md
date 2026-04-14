@@ -1,35 +1,79 @@
 # Bitrix24: план → задачи в проекте
 
+## Веб-платформа PlanRelay
+
+Документация по полнофункциональной версии (Neon, Auth.js, Next.js, Vercel):
+
+| Документ | Содержание |
+|----------|------------|
+| [`docs/BRIEF.md`](docs/BRIEF.md) | Продуктовое краткое ТЗ |
+| [`docs/TECH_CARD.md`](docs/TECH_CARD.md) | Технологический стек и чеклисты |
+| [`docs/01-ARCHITECTURE.md`](docs/01-ARCHITECTURE.md) | Архитектура и границы модулей |
+| [`docs/02-TECH_SPEC.md`](docs/02-TECH_SPEC.md) | Техническое задание (user stories, требования) |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | ADR: Neon, Auth.js, размер B, секреты |
+| [`docs/PROGRESS.md`](docs/PROGRESS.md) | Прогресс внедрения |
+
+Размер проекта в правилах Cursor: **B** (feature-based layout) — см. `.cursor/rules/00-core.mdc`.
+
+### Запуск веб-приложения
+
+```bash
+pnpm install
+cp .env.example .env   # заполните DATABASE_URL, AUTH_SECRET, OpenAI и т.д.
+pnpm exec prisma migrate dev
+pnpm dev
+```
+
+Откройте [http://localhost:3000](http://localhost:3000). Раздел приложения: `/app` (magic link по email; без Resend в dev ссылка логируется через `pino`).
+
+### Команды
+
+| Команда | Назначение |
+|---------|------------|
+| `pnpm dev` | Next.js dev |
+| `pnpm build` / `pnpm start` | production |
+| `pnpm lint` | ESLint |
+| `pnpm typecheck` | TypeScript |
+| `pnpm test` | Vitest |
+| `pnpm e2e` | Playwright (нужен dev-сервер или `PLAYWRIGHT_BASE_URL`) |
+| `pnpm run sync -- plans/example.plan.yaml --dry-run` | CLI синхронизации с Bitrix |
+
+---
+
+## CLI: Markdown → YAML → Bitrix
+
 **Сначала** черновик в **`plans/*.md`** (удобно читать), шаблон — `plans/example-plan.md` (структура как у обычного `plan.md`: заголовки `##` = эпики, списки = задачи). Файлы вида `*.plan.md` в этом проекте открываются как Markdown — см. `.vscode/settings.json`. **После согласования** — перенос в **`plans/*.yaml`** (`plans/example.plan.yaml`) и синхронизация с Bitrix. Смена проекта: **`Bitrix24_Project_id`** в `.env`. Подробнее — `.cursor/rules/bitrix24-workflow.mdc`.
 
 ## `.env`
 
-| Переменная | Описание |
-|------------|----------|
-| `Webhook_URL` | URL вебхука со слэшем в конце |
-| `Bitrix24_Project_id` | ID группы / проекта / Scrum в Bitrix |
-| `Bitrix24_responsible_id` | Опционально: ID ответственного по умолчанию |
+| Переменная                | Описание                                                                           |
+| ------------------------- | ---------------------------------------------------------------------------------- |
+| `Webhook_URL`             | URL вебхука со слэшем в конце                                                      |
+| `Bitrix24_Project_id`     | ID группы / проекта / Scrum в Bitrix                                               |
+| `Task_owner_id`           | `CREATED_BY` — постановщик (от чьего имени создаётся задача)                       |
+| `Task_Assignee_id`        | `RESPONSIBLE_ID` — исполнитель (в YAML `responsible_id` переопределяет только его) |
+| `Bitrix24_responsible_id` | Опционально: fallback для owner и assignee, если переменные выше не заданы         |
 
 `.env` не коммитить. Шаблон — `.env.example`.
 
-## Команды
+## Команды CLI
 
 Один раз после клонирования:
 
 ```bash
-npm install
+pnpm install
 ```
 
 Проверка плана без создания задач в Bitrix:
 
 ```bash
-npm run sync -- plans/example.plan.yaml --dry-run
+pnpm run sync -- plans/example.plan.yaml --dry-run
 ```
 
 Создание эпиков и задач в Bitrix (после проверки плана):
 
 ```bash
-npm run sync -- plans/example.plan.yaml
+pnpm run sync -- plans/example.plan.yaml
 ```
 
 Своё ТЗ — копируйте `example-plan.md` / `example.plan.yaml` в новые файлы и подставьте имя в командах `sync`.
