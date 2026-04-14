@@ -8,10 +8,32 @@ import { logger } from '@/shared/lib/logger';
 
 const fromFallback = 'PlanRelay <onboarding@resend.dev>';
 
+const SECONDS_PER_DAY = 86_400;
+const SESSION_MAX_AGE_SECONDS = 30 * SECONDS_PER_DAY;
+/** Refresh session timestamp in the DB at most every 24h (Auth.js default pattern). */
+const SESSION_UPDATE_AGE_SECONDS = SECONDS_PER_DAY;
+
+const isProduction = process.env.NODE_ENV === 'production';
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: process.env.AUTH_TRUST_HOST === 'true' || process.env.VERCEL === '1',
   adapter: PrismaAdapter(prisma),
-  session: { strategy: 'database', maxAge: 30 * 24 * 60 * 60 },
+  useSecureCookies: isProduction,
+  session: {
+    strategy: 'database',
+    maxAge: SESSION_MAX_AGE_SECONDS,
+    updateAge: SESSION_UPDATE_AGE_SECONDS,
+  },
+  cookies: {
+    sessionToken: {
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: isProduction,
+      },
+    },
+  },
   pages: {
     signIn: '/auth/signin',
     verifyRequest: '/auth/verify',
