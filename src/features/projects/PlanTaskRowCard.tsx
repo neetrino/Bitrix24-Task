@@ -19,7 +19,7 @@ function syncToggleButtonClass(syncSelected: boolean): string {
   if (syncSelected) {
     return `${SYNC_BTN_BASE} border-amber-400/50 bg-amber-950/60 text-amber-100/95 shadow-[inset_0_1px_0_0_rgba(251,191,36,0.14)] hover:border-amber-300/60 hover:bg-amber-900/45 focus-visible:ring-amber-500/50`;
   }
-  return `${SYNC_BTN_BASE} border-white/12 bg-slate-950/70 text-slate-300 hover:border-emerald-500/35 hover:bg-emerald-950/40 hover:text-emerald-200/95 focus-visible:ring-emerald-500/45`;
+  return `${SYNC_BTN_BASE} border-emerald-500/45 bg-emerald-950/55 text-emerald-100/95 shadow-[inset_0_1px_0_0_rgba(52,211,153,0.12)] hover:border-emerald-400/60 hover:bg-emerald-900/45 focus-visible:ring-emerald-500/50`;
 }
 
 /** Visible on touch; on fine-pointer devices hidden until card hover/focus-within. */
