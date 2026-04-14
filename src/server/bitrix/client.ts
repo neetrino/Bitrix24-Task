@@ -1,5 +1,20 @@
 import type { EpicAddResult, TaskAddResult } from '@/server/bitrix/types';
 
+/** Bitrix REST: user or task state blocks modify (closed task, wrong rights, stale id). */
+const TASK_ACTION_DENIED_HINT =
+  'Typical causes: the webhook user cannot edit this task, the task is completed/closed in Bitrix, the task was moved/deleted, or the stored Bitrix task id is outdated. In Bitrix: check rights for the incoming webhook user, reopen the task if needed, or in PlanRelay clear the Bitrix link for that row and sync again to create a new task.';
+
+function appendBitrixDeniedHint(message: string, description: string | undefined): string {
+  const d = description ?? '';
+  if (
+    d.includes('Действие над задачей не разрешено') ||
+    /action on (the )?task is not (allowed|permitted)/i.test(d)
+  ) {
+    return `${message} — ${TASK_ACTION_DENIED_HINT}`;
+  }
+  return message;
+}
+
 /** Response body inside REST `result` for `tasks.api.scrum.task.update` */
 type ScrumTaskUpdatePayload = {
   status?: string;
@@ -24,10 +39,12 @@ export async function bitrixCall<T>(
     error_description?: string;
   };
   if (!res.ok) {
-    throw new Error(`HTTP ${res.status}: ${JSON.stringify(json)}`);
+    const base = `HTTP ${res.status}: ${JSON.stringify(json)}`;
+    throw new Error(appendBitrixDeniedHint(base, json.error_description));
   }
   if (json.error) {
-    throw new Error(`${json.error}: ${json.error_description ?? ''}`);
+    const base = `${json.error}: ${json.error_description ?? ''}`;
+    throw new Error(appendBitrixDeniedHint(base, json.error_description));
   }
   return json.result as T;
 }
