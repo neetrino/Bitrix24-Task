@@ -1,10 +1,8 @@
 'use client';
 
 import { useActionState, useEffect, useOptimistic, useRef, useState, useTransition } from 'react';
-import type { ComponentProps } from 'react';
 import { useRouter } from 'next/navigation';
 import { sendChatMessage } from '@/features/chat/chat-actions';
-import { PhasePills } from '@/features/phases/PhasePills';
 
 export type ChatMessageLine = {
   id: string;
@@ -65,8 +63,6 @@ function formatModelLabel(id: string): string {
 type ProjectChatSectionProps = {
   initialMessages: ChatMessageLine[];
   projectId: string;
-  projectSlug: string;
-  phases: ComponentProps<typeof PhasePills>['phases'];
   phaseId: string | null;
   activeModel: string;
 };
@@ -74,8 +70,6 @@ type ProjectChatSectionProps = {
 export function ProjectChatSection({
   initialMessages,
   projectId,
-  projectSlug,
-  phases,
   phaseId,
   activeModel,
 }: ProjectChatSectionProps) {
@@ -133,18 +127,10 @@ export function ProjectChatSection({
       className="relative flex h-full min-h-0 flex-1 flex-col"
       onSubmit={handleSubmit}
     >
-      <div className="shrink-0 border-b border-white/10 bg-slate-950/50 px-3 py-2 sm:px-4">
-        <PhasePills
-          activePhaseId={phaseId}
-          phases={phases}
-          projectId={projectId}
-          projectSlug={projectSlug}
-        />
-      </div>
       <div className="min-h-0 flex-1 overflow-y-auto" ref={scrollRef}>
-        <div className={`mx-auto w-full ${CHAT_CONTENT_MAX} px-4 pb-40 pt-4`}>
+        <div className={`mx-auto w-full ${CHAT_CONTENT_MAX} px-4 pb-40 pt-2`}>
           {optimisticMessages.length === 0 ? (
-            <p className="py-12 text-center text-sm text-slate-500">
+            <p className="py-8 text-center text-sm text-slate-500">
               Describe your goal — the assistant will structure tasks and update the plan. You can paste
               specs under <span className="text-slate-400">Optional context</span> so the plan reflects
               your document.

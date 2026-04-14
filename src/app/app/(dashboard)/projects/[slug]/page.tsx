@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { ProjectChatSection } from '@/features/chat/ProjectChatSection';
+import { PhasePills } from '@/features/phases/PhasePills';
 import { PlanTasksPanel } from '@/features/projects/PlanTasksPanel';
 import { ProjectBitrixSetupPanel } from '@/features/projects/ProjectBitrixSetupPanel';
 import { getProjectForUser } from '@/features/projects/project-queries';
@@ -74,18 +75,29 @@ export default async function ProjectPage({
   }));
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <header className="flex min-w-0 shrink-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <h1 className="min-w-0 max-w-full truncate text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+    <div className="flex min-h-0 flex-1 flex-col gap-2">
+      <header className="flex min-w-0 shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <h1 className="min-w-0 max-w-full shrink-0 truncate text-2xl font-semibold tracking-tight text-white sm:text-3xl">
           {project.name}
         </h1>
-        <ProjectBitrixSetupPanel
-          activePhaseId={activePhaseId}
-          exportMd={exportMd}
-          exportYaml={exportYaml}
-          project={project}
-        />
+        <div className="flex min-w-0 justify-start sm:max-w-[min(100%,28rem)] sm:justify-end">
+          <PhasePills
+            activePhaseId={activePhaseId}
+            phases={phases}
+            projectId={project.id}
+            projectSlug={project.slug}
+            showLabel={false}
+          />
+        </div>
       </header>
+
+      <ProjectBitrixSetupPanel
+        activePhaseId={activePhaseId}
+        exportMd={exportMd}
+        exportYaml={exportYaml}
+        layout="edge"
+        project={project}
+      />
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[minmax(220px,280px)_minmax(0,1fr)] lg:gap-4 lg:overflow-hidden lg:-mx-6">
         <aside className="order-2 flex min-h-0 flex-col overflow-hidden lg:order-1 lg:pl-6">
@@ -98,10 +110,8 @@ export default async function ProjectPage({
           <ProjectChatSection
             activeModel={effectiveChatModel}
             initialMessages={chatLines}
-            phases={phases}
             phaseId={activePhaseId}
             projectId={project.id}
-            projectSlug={project.slug}
           />
         </section>
       </div>

@@ -10,6 +10,10 @@ import { WORKSPACE_BODY_CLASS, WORKSPACE_GHOST_BTN_CLASS } from '@/shared/ui/wor
 const TOOLBAR_TRIGGER_BTN_CLASS =
   'shrink-0 rounded-lg border border-white/12 bg-white/[0.05] px-2.5 py-1.5 text-center text-xs font-medium text-slate-200 transition hover:border-violet-400/35 hover:bg-white/[0.08] hover:text-white';
 
+/** Fixed strip on the viewport right — stacked vertically */
+const EDGE_TRIGGER_BTN_CLASS =
+  'w-full min-w-[5.25rem] rounded-lg border border-white/12 bg-slate-950/90 px-2 py-2 text-center text-[11px] font-medium leading-tight text-slate-200 shadow-lg shadow-black/40 backdrop-blur-md transition hover:border-violet-400/35 hover:bg-slate-900/95 hover:text-white sm:min-w-[5.5rem] sm:text-xs';
+
 const PANEL_TRIGGER_BTN_CLASS =
   'w-full rounded-lg border border-white/15 bg-white/[0.06] px-3 py-2.5 text-center text-xs font-medium text-slate-100 transition hover:border-violet-400/40 hover:bg-white/[0.09] hover:text-white';
 
@@ -33,7 +37,7 @@ export function ProjectBitrixSetupPanel({
   exportMd: string;
   exportYaml: string;
   activePhaseId: string | null;
-  layout?: 'toolbar' | 'panel';
+  layout?: 'toolbar' | 'panel' | 'edge';
 }) {
   const [open, setOpen] = useState<'bitrix' | 'export' | null>(null);
 
@@ -41,19 +45,34 @@ export function ProjectBitrixSetupPanel({
     setOpen(null);
   }
 
-  const triggerClass = layout === 'toolbar' ? TOOLBAR_TRIGGER_BTN_CLASS : PANEL_TRIGGER_BTN_CLASS;
+  const triggerClass =
+    layout === 'edge'
+      ? EDGE_TRIGGER_BTN_CLASS
+      : layout === 'toolbar'
+        ? TOOLBAR_TRIGGER_BTN_CLASS
+        : PANEL_TRIGGER_BTN_CLASS;
   const triggerWrapClass =
-    layout === 'toolbar'
-      ? 'flex shrink-0 flex-wrap items-center justify-end gap-1.5 sm:pt-0.5'
-      : 'mt-2 grid grid-cols-2 gap-2';
+    layout === 'edge'
+      ? 'pointer-events-none fixed right-3 top-1/2 z-30 flex -translate-y-1/2 flex-col gap-2 max-lg:bottom-28 max-lg:top-auto max-lg:translate-y-0 sm:right-4'
+      : layout === 'toolbar'
+        ? 'flex shrink-0 flex-wrap items-center justify-end gap-1.5 sm:pt-0.5'
+        : 'mt-2 grid grid-cols-2 gap-2';
 
   return (
     <>
       <div className={triggerWrapClass}>
-        <button className={triggerClass} onClick={() => setOpen('bitrix')} type="button">
+        <button
+          className={`${triggerClass} pointer-events-auto`}
+          onClick={() => setOpen('bitrix')}
+          type="button"
+        >
           Bitrix24
         </button>
-        <button className={triggerClass} onClick={() => setOpen('export')} type="button">
+        <button
+          className={`${triggerClass} pointer-events-auto`}
+          onClick={() => setOpen('export')}
+          type="button"
+        >
           Export
         </button>
       </div>

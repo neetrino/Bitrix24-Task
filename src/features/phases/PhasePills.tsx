@@ -11,18 +11,23 @@ export function PhasePills({
   projectSlug,
   phases,
   activePhaseId,
+  showLabel = true,
 }: {
   projectId: string;
   projectSlug: string;
   phases: Phase[];
   activePhaseId: string | null;
+  /** When false, hides the "Phase" caption (e.g. compact header row). */
+  showLabel?: boolean;
 }) {
   const [addOpen, setAddOpen] = useState(false);
 
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500">Phase</span>
+        {showLabel ? (
+          <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500">Phase</span>
+        ) : null}
         <div className="flex flex-wrap items-center gap-1.5">
         <Link
           className={

@@ -8,7 +8,7 @@ import { WORKSPACE_PANEL_CLASS } from '@/shared/ui/workspace-ui';
 export function PlanTasksPanel({ plan }: { plan: PlanPayload }) {
   return (
     <div className={`flex h-full min-h-0 flex-col ${WORKSPACE_PANEL_CLASS}`}>
-      <div className="border-b border-white/10 bg-gradient-to-r from-violet-500/10 to-cyan-500/10 px-4 py-3">
+      <div className="border-b border-white/10 bg-gradient-to-r from-violet-500/10 to-cyan-500/10 px-3 py-2">
         <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-violet-200/90">
           <SparklesGlyph className="h-3.5 w-3.5 text-cyan-300" />
           AI plan
