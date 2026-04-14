@@ -22,7 +22,7 @@ alwaysApply: true
 ## Переменные окружения
 
 - **`Bitrix24_Project_id`** в `.env` — целевой проект; **`Webhook_URL`** — вебхук. Секреты и полный URL вебхука не коммитить и не светить в открытом виде.
-- Опционально: `Bitrix24_responsible_id`.
+- Постановщик и исполнитель: `Task_owner_id` → `CREATED_BY`, `Task_Assignee_id` → `RESPONSIBLE_ID`; при отсутствии — fallback на `Bitrix24_responsible_id`, затем `1`. В YAML поле `responsible_id` переопределяет только исполнителя.
 
 ## Режимы эпиков
 

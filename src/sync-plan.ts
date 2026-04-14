@@ -26,6 +26,13 @@ type Plan = {
 type TaskAddResult = { task: { id: string } };
 type EpicAddResult = { id: number };
 
+/** Response body inside REST `result` for `tasks.api.scrum.task.update` */
+type ScrumTaskUpdatePayload = {
+  status?: string;
+  data?: boolean | null;
+  errors?: unknown[];
+};
+
 function isRecord(x: unknown): x is Record<string, unknown> {
   return typeof x === "object" && x !== null && !Array.isArray(x);
 }
@@ -114,21 +121,69 @@ async function bitrixCall<T>(
   return json.result as T;
 }
 
-function loadEnv(): { webhook: string; groupId: number; responsibleId: number } {
+/**
+ * Bitrix Scrum: `epicId` on `tasks.task.add` does not attach the epic in Planning/backlog UI.
+ * Official flow: create task, then `tasks.api.scrum.task.update` with `epicId`.
+ * @see https://apidocs.bitrix24.com/api-reference/sonet-group/scrum/task/tasks-api-scrum-task-update.html
+ */
+async function linkScrumTaskToEpic(
+  webhook: string,
+  taskId: number,
+  epicId: number
+): Promise<void> {
+  const payload = await bitrixCall<ScrumTaskUpdatePayload | boolean>(
+    webhook,
+    "tasks.api.scrum.task.update",
+    {
+      id: taskId,
+      fields: { epicId },
+    }
+  );
+  if (payload === true) return;
+  if (typeof payload === "object" && payload !== null && "status" in payload) {
+    if (payload.status === "success") return;
+    if (payload.status === "error") {
+      throw new Error(
+        `tasks.api.scrum.task.update failed for task ${taskId}: ${JSON.stringify(payload)}`
+      );
+    }
+  }
+}
+
+type TaskActors = {
+  /** CREATED_BY — постановщик / от чьего имени создаётся задача */
+  taskOwnerId: number;
+  /** RESPONSIBLE_ID — исполнитель (YAML `responsible_id` может переопределить) */
+  taskAssigneeId: number;
+};
+
+function parseUserId(raw: string | undefined, label: string): number | undefined {
+  if (raw === undefined || raw.trim() === "") return undefined;
+  const n = Number(raw.trim());
+  if (!Number.isFinite(n)) {
+    throw new Error(`${label} must be a number`);
+  }
+  return n;
+}
+
+function loadEnv(): { webhook: string; groupId: number } & TaskActors {
   const webhook = process.env.Webhook_URL?.trim();
   const idRaw = process.env.Bitrix24_Project_id?.trim();
-  const respRaw = process.env.Bitrix24_responsible_id?.trim();
+  const legacyResponsible = parseUserId(process.env.Bitrix24_responsible_id, "Bitrix24_responsible_id");
+  const ownerParsed = parseUserId(process.env.Task_owner_id, "Task_owner_id");
+  const assigneeParsed = parseUserId(process.env.Task_Assignee_id, "Task_Assignee_id");
+
   if (!webhook) throw new Error("Missing Webhook_URL in .env");
   if (!idRaw) throw new Error("Missing Bitrix24_Project_id in .env");
   const groupId = Number(idRaw);
   if (!Number.isFinite(groupId)) {
     throw new Error("Bitrix24_Project_id must be a number");
   }
-  const responsibleId = respRaw ? Number(respRaw) : 1;
-  if (!Number.isFinite(responsibleId)) {
-    throw new Error("Bitrix24_responsible_id must be a number");
-  }
-  return { webhook, groupId, responsibleId };
+
+  const taskOwnerId = ownerParsed ?? legacyResponsible ?? 1;
+  const taskAssigneeId = assigneeParsed ?? legacyResponsible ?? 1;
+
+  return { webhook, groupId, taskOwnerId, taskAssigneeId };
 }
 
 function parseArgs(argv: string[]): { planPath: string; dryRun: boolean } {
@@ -141,14 +196,18 @@ function parseArgs(argv: string[]): { planPath: string; dryRun: boolean } {
   return { planPath: resolve(pathArg), dryRun };
 }
 
+function resolveAssigneeId(plan: Plan, actors: TaskActors): number {
+  return plan.responsible_id ?? actors.taskAssigneeId;
+}
+
 async function syncScrum(
   plan: Plan,
   webhook: string,
   groupId: number,
-  responsibleId: number,
+  actors: TaskActors,
   dryRun: boolean
 ): Promise<void> {
-  const rid = plan.responsible_id ?? responsibleId;
+  const assigneeId = resolveAssigneeId(plan, actors);
   for (const epic of plan.epics) {
     if (dryRun) {
       console.log(`[dry-run] epic: ${epic.name} (${epic.tasks.length} tasks)`);
@@ -169,12 +228,13 @@ async function syncScrum(
           TITLE: task.title,
           DESCRIPTION: task.description ?? "",
           GROUP_ID: groupId,
-          RESPONSIBLE_ID: rid,
-          CREATED_BY: rid,
-          epicId,
+          RESPONSIBLE_ID: assigneeId,
+          CREATED_BY: actors.taskOwnerId,
         },
       });
-      console.log(`  Task: id=${taskResult.task.id} ${task.title}`);
+      const taskId = Number(taskResult.task.id);
+      await linkScrumTaskToEpic(webhook, taskId, epicId);
+      console.log(`  Task: id=${taskResult.task.id} ${task.title} (epic ${epicId})`);
     }
   }
 }
@@ -183,10 +243,10 @@ async function syncParentTasks(
   plan: Plan,
   webhook: string,
   groupId: number,
-  responsibleId: number,
+  actors: TaskActors,
   dryRun: boolean
 ): Promise<void> {
-  const rid = plan.responsible_id ?? responsibleId;
+  const assigneeId = resolveAssigneeId(plan, actors);
   for (const epic of plan.epics) {
     if (dryRun) {
       console.log(`[dry-run] parent task: ${epic.name} + ${epic.tasks.length} subtasks`);
@@ -197,8 +257,8 @@ async function syncParentTasks(
         TITLE: epic.name,
         DESCRIPTION: epic.description ?? "",
         GROUP_ID: groupId,
-        RESPONSIBLE_ID: rid,
-        CREATED_BY: rid,
+        RESPONSIBLE_ID: assigneeId,
+        CREATED_BY: actors.taskOwnerId,
       },
     });
     const parentId = Number(parent.task.id);
@@ -209,8 +269,8 @@ async function syncParentTasks(
           TITLE: task.title,
           DESCRIPTION: task.description ?? "",
           GROUP_ID: groupId,
-          RESPONSIBLE_ID: rid,
-          CREATED_BY: rid,
+          RESPONSIBLE_ID: assigneeId,
+          CREATED_BY: actors.taskOwnerId,
           PARENT_ID: parentId,
         },
       });
@@ -223,17 +283,22 @@ async function main(): Promise<void> {
   const { planPath, dryRun } = parseArgs(process.argv);
   const raw = readFileSync(planPath, "utf8");
   const plan = parsePlan(parseYaml(raw));
-  const { webhook, groupId, responsibleId } = loadEnv();
+  const { webhook, groupId, taskOwnerId, taskAssigneeId } = loadEnv();
 
   console.log(
     `Plan: ${plan.project_title ?? planPath}\n` +
-      `Mode: ${plan.epic_mode}, groupId=${groupId}, dryRun=${dryRun}\n`
+      `Mode: ${plan.epic_mode}, groupId=${groupId}, dryRun=${dryRun}\n` +
+      `CREATED_BY (owner)=${taskOwnerId}, RESPONSIBLE_ID (assignee base)=${taskAssigneeId}` +
+      (plan.responsible_id !== undefined ? `, YAML override assignee=${plan.responsible_id}` : "") +
+      "\n"
   );
 
+  const actors: TaskActors = { taskOwnerId, taskAssigneeId };
+
   if (plan.epic_mode === "scrum") {
-    await syncScrum(plan, webhook, groupId, responsibleId, dryRun);
+    await syncScrum(plan, webhook, groupId, actors, dryRun);
   } else {
-    await syncParentTasks(plan, webhook, groupId, responsibleId, dryRun);
+    await syncParentTasks(plan, webhook, groupId, actors, dryRun);
   }
 }
 
