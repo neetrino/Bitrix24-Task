@@ -1,6 +1,6 @@
 # Bitrix24: план → задачи в проекте
 
-## Веб-платформа PlanRelay (в разработке)
+## Веб-платформа PlanRelay
 
 Документация по полнофункциональной версии (Neon, Auth.js, Next.js, Vercel):
 
@@ -14,6 +14,29 @@
 | [`docs/PROGRESS.md`](docs/PROGRESS.md) | Прогресс внедрения |
 
 Размер проекта в правилах Cursor: **B** (feature-based layout) — см. `.cursor/rules/00-core.mdc`.
+
+### Запуск веб-приложения
+
+```bash
+pnpm install
+cp .env.example .env   # заполните DATABASE_URL, AUTH_SECRET, OpenAI и т.д.
+pnpm exec prisma migrate dev
+pnpm dev
+```
+
+Откройте [http://localhost:3000](http://localhost:3000). Раздел приложения: `/app` (magic link по email; без Resend в dev ссылка логируется через `pino`).
+
+### Команды
+
+| Команда | Назначение |
+|---------|------------|
+| `pnpm dev` | Next.js dev |
+| `pnpm build` / `pnpm start` | production |
+| `pnpm lint` | ESLint |
+| `pnpm typecheck` | TypeScript |
+| `pnpm test` | Vitest |
+| `pnpm e2e` | Playwright (нужен dev-сервер или `PLAYWRIGHT_BASE_URL`) |
+| `pnpm run sync -- plans/example.plan.yaml --dry-run` | CLI синхронизации с Bitrix |
 
 ---
 
@@ -33,24 +56,24 @@
 
 `.env` не коммитить. Шаблон — `.env.example`.
 
-## Команды
+## Команды CLI
 
 Один раз после клонирования:
 
 ```bash
-npm install
+pnpm install
 ```
 
 Проверка плана без создания задач в Bitrix:
 
 ```bash
-npm run sync -- plans/example.plan.yaml --dry-run
+pnpm run sync -- plans/example.plan.yaml --dry-run
 ```
 
 Создание эпиков и задач в Bitrix (после проверки плана):
 
 ```bash
-npm run sync -- plans/example.plan.yaml
+pnpm run sync -- plans/example.plan.yaml
 ```
 
 Своё ТЗ — копируйте `example-plan.md` / `example.plan.yaml` в новые файлы и подставьте имя в командах `sync`.

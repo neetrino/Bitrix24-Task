@@ -1,8 +1,8 @@
 # Development progress — PlanRelay / Bitrix24-Task
 
 **Project.** PlanRelay (web) + Bitrix24 sync CLI  
-**Phase.** Documentation / architecture  
-**Overall progress.** 8% (docs, stack, `.env.example`; app not scaffolded)
+**Phase.** Core web app + integrations  
+**Overall progress.** ~65% (MVP scaffolded; production hardening ongoing)
 
 **Last updated.** 2026-04-14
 
@@ -12,11 +12,11 @@
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| 1. Init & docs | In progress | 85% |
-| 2. Next.js + Prisma + Auth.js + Neon | Not started | 0% |
-| 3. Core features (projects, chat, plan) | Not started | 0% |
-| 4. Export MD + Bitrix sync integration | Not started | 0% |
-| 5. Hardening & E2E | Not started | 0% |
+| 1. Init & docs | Done | 95% |
+| 2. Next.js + Prisma + Auth.js + Neon | Done | 90% |
+| 3. Core features (projects, chat, plan) | Done | 85% |
+| 4. Export MD + Bitrix sync integration | Done | 85% |
+| 5. Hardening & E2E | In progress | 40% |
 | 6. Production deploy | Not started | 0% |
 
 ---
@@ -33,20 +33,32 @@
 - [x] `docs/DECISIONS.md` — ADRs
 - [x] CLI sync script and `plans/example.plan.yaml` (pre-existing)
 
+### Phase 2–4 (implementation)
+
+- [x] pnpm + Next.js App Router + Tailwind + strict TypeScript
+- [x] Prisma schema (Auth.js tables, Project, Phase, Message, PlanSnapshot), migrations
+- [x] Auth.js email magic link (Resend when configured; dev log otherwise)
+- [x] Protected `/app` layout (server-side `auth()`)
+- [x] Projects CRUD (create + Bitrix field settings)
+- [x] Phases: list, create, scope chat/plan/export/sync by `?phase=`
+- [x] AI chat + validated plan JSON + snapshots (OpenAI server-side)
+- [x] Plan editor (JSON) + Markdown/YAML export routes
+- [x] Bitrix sync (dry-run + live) reusing `src/server/bitrix/*`; CLI `src/sync-plan.ts` refactored
+- [x] Optional Upstash rate limit for chat/sync (`UPSTASH_*`)
+- [x] Vitest unit test, Playwright smoke, GitHub Actions CI
+
 ---
 
 ## In progress
 
-- [x] Extend `.env.example` for web (Neon, Auth.js)
-- [x] Root `README.md` — link web docs + CLI section
-- [ ] Scaffold Next.js app (`pnpm`, Prisma, Auth.js) — **not started**
+- [ ] Broader Playwright coverage (login, project flows) — needs test mail or provider mock
+- [ ] Production deploy checklist (Vercel env, Neon, Resend domain)
 
 ---
 
 ## Blocked / waiting
 
-- Neon `DATABASE_URL` and Vercel project (developer-provided)
-- OAuth / magic-link provider choice (see `docs/TECH_CARD.md` §5)
+- OAuth / Google (optional; see `docs/TECH_CARD.md` §5)
 - Adaptive DB limits (pool, timeouts) — team alignment per `00-core.mdc`
 
 ---

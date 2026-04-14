@@ -1,0 +1,69 @@
+import { stringify } from 'yaml';
+import { auth } from '@/auth';
+import { DEFAULT_PLAN, parsePlanFromJson } from '@/shared/domain/plan';
+import { planToMarkdown } from '@/shared/lib/plan-markdown';
+import { prisma } from '@/shared/lib/prisma';
+
+export async function GET(
+  req: Request,
+  context: { params: Promise<{ slug: string }> },
+): Promise<Response> {
+  const { slug } = await context.params;
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const project = await prisma.project.findFirst({
+    where: { slug, ownerId: userId },
+  });
+  if (!project) {
+    return Response.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  const url = new URL(req.url);
+  const format = url.searchParams.get('format') ?? 'md';
+  const phaseParam = url.searchParams.get('phase');
+
+  let phaseId: string | null = null;
+  if (phaseParam) {
+    const phase = await prisma.phase.findFirst({
+      where: { id: phaseParam, projectId: project.id },
+    });
+    if (!phase) {
+      return Response.json({ error: 'Phase not found' }, { status: 404 });
+    }
+    phaseId = phase.id;
+  }
+
+  const snapshot = await prisma.planSnapshot.findFirst({
+    where: { projectId: project.id, phaseId },
+    orderBy: { updatedAt: 'desc' },
+  });
+
+  let plan;
+  try {
+    plan = snapshot ? parsePlanFromJson(snapshot.payload) : DEFAULT_PLAN;
+  } catch {
+    plan = DEFAULT_PLAN;
+  }
+
+  if (format === 'yaml') {
+    const body = stringify(plan);
+    return new Response(body, {
+      headers: {
+        'Content-Type': 'text/yaml; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${project.slug}.plan.yaml"`,
+      },
+    });
+  }
+
+  const md = planToMarkdown(plan, project.name);
+  return new Response(md, {
+    headers: {
+      'Content-Type': 'text/markdown; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${project.slug}-plan.md"`,
+    },
+  });
+}
