@@ -11,8 +11,20 @@ const LIST_WRAP =
 const GRID_WRAP =
   'rounded-xl border px-3 py-3 shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-emerald-500/40';
 
-const CHECKBOX_WRAP_CLASS =
-  'shrink-0 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100';
+/** Bitrix sync toggle — compact pill on the right side of the card. */
+const SYNC_BTN_BASE =
+  'shrink-0 rounded-lg border px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition focus-visible:outline-none focus-visible:ring-2 disabled:opacity-50';
+
+function syncToggleButtonClass(syncSelected: boolean): string {
+  if (syncSelected) {
+    return `${SYNC_BTN_BASE} border-amber-400/50 bg-amber-950/60 text-amber-100/95 shadow-[inset_0_1px_0_0_rgba(251,191,36,0.14)] hover:border-amber-300/60 hover:bg-amber-900/45 focus-visible:ring-amber-500/50`;
+  }
+  return `${SYNC_BTN_BASE} border-white/12 bg-slate-950/70 text-slate-300 hover:border-emerald-500/35 hover:bg-emerald-950/40 hover:text-emerald-200/95 focus-visible:ring-emerald-500/45`;
+}
+
+/** Visible on touch; on fine-pointer devices hidden until card hover/focus-within. */
+const SYNC_BTN_REVEAL =
+  'opacity-100 transition-opacity duration-150 [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:transition-opacity [@media(hover:hover)]:duration-150 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:pointer-events-auto [@media(hover:hover)]:group-focus-within:opacity-100';
 
 export function PlanTaskRowCard({
   row,
@@ -85,7 +97,7 @@ export function PlanTaskRowCard({
 
   return (
     <div
-      className={`group relative ${wrapClass} ${stateClass} ${pending ? 'pointer-events-none opacity-70' : ''}`}
+      className={`group ${wrapClass} ${stateClass} ${pending ? 'pointer-events-none opacity-70' : ''}`}
       onClick={() => {
         if (pending) return;
         onBeginEdit();
@@ -98,48 +110,43 @@ export function PlanTaskRowCard({
       }}
       role="button"
       tabIndex={0}
-      title="Click to edit. Use the checkbox to include or exclude from Bitrix sync."
+      title="Click the card to edit. Hover to show Select/Deselect for Bitrix sync."
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="flex min-w-0 flex-1 items-start gap-2">
-          <div className={`flex shrink-0 items-center pt-0.5 ${CHECKBOX_WRAP_CLASS}`}>
-            <input
-              aria-label={
-                syncSelected ? 'Included in Bitrix sync — click to exclude' : 'Not included in Bitrix sync — click to include'
-              }
-              checked={syncSelected}
-              className="h-3.5 w-3.5 cursor-pointer rounded border-white/25 bg-slate-900 text-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/50"
-              onChange={(e) => {
-                e.stopPropagation();
-                onToggleSync();
-              }}
-              onClick={(e) => e.stopPropagation()}
-              type="checkbox"
-            />
-          </div>
-          <p className="flex min-w-0 flex-1 flex-wrap items-baseline gap-2 text-sm text-slate-200">
-            <span className="shrink-0 tabular-nums font-mono text-[10px] font-medium text-slate-500">
-              {row.displayNumber}
-            </span>
-            {row.task.bitrixSynced ? (
-              <span
-                className="shrink-0 rounded border border-emerald-500/35 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-300/95"
-                title="This task was pushed to Bitrix"
-              >
-                Bitrix
-              </span>
-            ) : null}
+        <p className="flex min-w-0 flex-1 flex-wrap items-baseline gap-2 text-sm text-slate-200">
+          <span className="shrink-0 tabular-nums font-mono text-[10px] font-medium text-slate-500">
+            {row.displayNumber}
+          </span>
+          {row.task.bitrixSynced ? (
             <span
-              className={
-                variant === 'grid'
-                  ? 'min-w-0 font-medium leading-snug text-slate-100'
-                  : 'min-w-0'
-              }
+              className="shrink-0 rounded border border-emerald-500/35 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-300/95"
+              title="This task was pushed to Bitrix"
             >
-              {row.task.title}
+              Bitrix
             </span>
-          </p>
-        </div>
+          ) : null}
+          <span
+            className={
+              variant === 'grid'
+                ? 'min-w-0 font-medium leading-snug text-slate-100'
+                : 'min-w-0'
+            }
+          >
+            {row.task.title}
+          </span>
+        </p>
+        <button
+          aria-pressed={syncSelected}
+          className={`${syncToggleButtonClass(syncSelected)} ${SYNC_BTN_REVEAL}`}
+          disabled={pending}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSync();
+          }}
+          type="button"
+        >
+          {syncSelected ? 'Deselect' : 'Select'}
+        </button>
       </div>
       {row.task.description ? (
         <p
