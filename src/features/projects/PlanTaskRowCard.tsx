@@ -38,7 +38,7 @@ export function PlanTaskRowCard({
   onCancelEdit,
   onSaveEdit,
   onToggleSync,
-  pending,
+  savePending,
 }: {
   row: FlatPlanTaskRow;
   variant: 'list' | 'grid';
@@ -51,11 +51,14 @@ export function PlanTaskRowCard({
   onCancelEdit: () => void;
   onSaveEdit: () => void;
   onToggleSync: () => void;
-  pending: boolean;
+  /** Only for inline save (Cancel/Save); does not block sync toggles on other cards. */
+  savePending: boolean;
 }) {
   if (isEditing) {
     return (
-      <div className="space-y-2 rounded-lg border border-violet-500/25 bg-slate-950/50 p-2">
+      <div
+        className={`space-y-2 rounded-lg border border-violet-500/25 bg-slate-950/50 p-2 ${savePending ? 'pointer-events-none opacity-70' : ''}`}
+      >
         <input
           className={`w-full ${WORKSPACE_FIELD_CLASS} text-xs`}
           onChange={(e) => onDraftTitleChange(e.target.value)}
@@ -70,7 +73,7 @@ export function PlanTaskRowCard({
         <div className="flex flex-wrap gap-2">
           <button
             className={WORKSPACE_GHOST_BTN_CLASS}
-            disabled={pending}
+            disabled={savePending}
             onClick={onCancelEdit}
             type="button"
           >
@@ -78,11 +81,11 @@ export function PlanTaskRowCard({
           </button>
           <button
             className={WORKSPACE_GHOST_BTN_CLASS}
-            disabled={pending}
+            disabled={savePending}
             onClick={onSaveEdit}
             type="button"
           >
-            {pending ? 'Saving…' : 'Save'}
+            {savePending ? 'Saving…' : 'Save'}
           </button>
         </div>
       </div>
@@ -97,15 +100,12 @@ export function PlanTaskRowCard({
 
   return (
     <div
-      className={`group ${wrapClass} ${stateClass} ${pending ? 'pointer-events-none opacity-70' : ''}`}
-      onClick={() => {
-        if (pending) return;
-        onBeginEdit();
-      }}
+      className={`group ${wrapClass} ${stateClass}`}
+      onClick={onBeginEdit}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          if (!pending) onBeginEdit();
+          onBeginEdit();
         }
       }}
       role="button"
@@ -138,7 +138,6 @@ export function PlanTaskRowCard({
         <button
           aria-pressed={syncSelected}
           className={`${syncToggleButtonClass(syncSelected)} ${SYNC_BTN_REVEAL}`}
-          disabled={pending}
           onClick={(e) => {
             e.stopPropagation();
             onToggleSync();

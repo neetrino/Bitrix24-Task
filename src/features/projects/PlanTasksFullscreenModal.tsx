@@ -31,7 +31,7 @@ export function PlanTasksFullscreenModal({
   onCancelEdit,
   onSaveEdit,
   onToggleSync,
-  pending,
+  savePending,
   saveNote,
   syncNote,
   planLoading = false,
@@ -52,7 +52,8 @@ export function PlanTasksFullscreenModal({
   onCancelEdit: () => void;
   onSaveEdit: () => void;
   onToggleSync: (row: FlatPlanTaskRow) => void;
-  pending: boolean;
+  /** True while task edit save is in flight (does not block Select/Deselect). */
+  savePending: boolean;
   saveNote: string | null;
   syncNote: string | null;
   planLoading?: boolean;
@@ -202,7 +203,7 @@ export function PlanTasksFullscreenModal({
                       onDraftTitleChange={onDraftTitleChange}
                       onSaveEdit={onSaveEdit}
                       onToggleSync={() => onToggleSync(row)}
-                      pending={pending}
+                      savePending={savePending}
                       row={row}
                       variant={viewMode === 'grid' ? 'grid' : 'list'}
                     />

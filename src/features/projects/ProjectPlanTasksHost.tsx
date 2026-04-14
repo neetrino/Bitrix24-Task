@@ -14,6 +14,21 @@ import { PlanTasksFullscreenModal } from '@/features/projects/PlanTasksFullscree
 import { ProjectPlanTasksProvider } from '@/features/projects/project-plan-tasks-context';
 import { logger } from '@/shared/lib/logger';
 
+async function setPlanTaskSyncSelectedSafe(
+  projectId: string,
+  phaseId: string | null,
+  epicIndex: number,
+  taskIndex: number,
+  syncSelected: boolean,
+): Promise<{ ok: true } | { error: string }> {
+  try {
+    return await setPlanTaskSyncSelected(projectId, phaseId, epicIndex, taskIndex, syncSelected);
+  } catch (e) {
+    logger.error({ err: e, projectId }, 'setPlanTaskSyncSelected failed');
+    return { error: e instanceof Error ? e.message : 'Request failed' };
+  }
+}
+
 type EditingTarget = { epicIndex: number; taskIndex: number };
 
 function phasesMatch(a: string | null, b: string | null): boolean {
@@ -45,7 +60,7 @@ export function ProjectPlanTasksHost({
   const [draftDescription, setDraftDescription] = useState('');
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [syncNote, setSyncNote] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [savePending, startSaveTransition] = useTransition();
 
   const planSyncKey = `${projectId}:${activePhaseId ?? 'main'}`;
   const planSyncKeyRef = useRef<string | null>(null);
@@ -173,7 +188,7 @@ export function ProjectPlanTasksHost({
     setDraftTitle('');
     setDraftDescription('');
 
-    startTransition(async () => {
+    startSaveTransition(async () => {
       const res = await savePlanSnapshot(projectId, effectivePhaseId, JSON.stringify(next));
       if (res && 'error' in res && res.error) {
         setSaveNote(res.error);
@@ -220,8 +235,8 @@ export function ProjectPlanTasksHost({
       }
       cachePlanForCurrentModal(optimisticPlan);
 
-      startTransition(async () => {
-        const res = await setPlanTaskSyncSelected(
+      void (async () => {
+        const res = await setPlanTaskSyncSelectedSafe(
           projectId,
           effectivePhaseId,
           row.epicIndex,
@@ -237,7 +252,7 @@ export function ProjectPlanTasksHost({
           }
           cachePlanForCurrentModal(prevModal ?? prevMain);
         }
-      });
+      })();
     },
     [cachePlanForCurrentModal, effectivePhaseId, modalPlan, plan, projectId],
   );
@@ -261,7 +276,7 @@ export function ProjectPlanTasksHost({
         onSearchChange={setSearch}
         onToggleSync={toggleRowBitrixSync}
         open={modalOpen}
-        pending={pending}
+        savePending={savePending}
         plan={effectivePlan}
         planLoading={planLoading}
         saveNote={saveNote}
