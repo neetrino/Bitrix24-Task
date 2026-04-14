@@ -18,6 +18,7 @@ import {
   type FlatPlanTaskRow,
 } from '@/features/projects/plan-tasks-iterate';
 import { PlanTasksFullscreenModal } from '@/features/projects/PlanTasksFullscreenModal';
+import { PlanTaskRowCard } from '@/features/projects/PlanTaskRowCard';
 import { SparklesGlyph } from '@/shared/ui/brand-icons';
 import {
   WORKSPACE_FIELD_CLASS,
@@ -30,11 +31,13 @@ type EditingTarget = { epicIndex: number; taskIndex: number };
 export function PlanTasksPanelClient({
   initialPlan,
   projectId,
+  projectSlug,
   phaseId,
   showPlanHeader = true,
 }: {
   initialPlan: PlanPayload;
   projectId: string;
+  projectSlug: string;
   phaseId: string | null;
   showPlanHeader?: boolean;
 }) {
@@ -52,6 +55,29 @@ export function PlanTasksPanelClient({
   useEffect(() => {
     setPlan(initialPlan);
   }, [initialPlan]);
+
+  useEffect(() => {
+    const scrollToHash = () => {
+      const hash = window.location.hash;
+      if (!hash.startsWith('#task-')) return;
+      const id = hash.slice(1);
+      requestAnimationFrame(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    };
+    scrollToHash();
+    window.addEventListener('hashchange', scrollToHash);
+    return () => window.removeEventListener('hashchange', scrollToHash);
+  }, []);
+
+  const taskHrefFor = useCallback(
+    (row: FlatPlanTaskRow) => {
+      const base = `/app/projects/${projectSlug}`;
+      const phaseQ = phaseId ? `?phase=${phaseId}` : '';
+      return `${base}${phaseQ}#task-${row.epicIndex}-${row.taskIndex}`;
+    },
+    [phaseId, projectSlug],
+  );
 
   const flat = useMemo(() => buildFlatPlanTasks(plan), [plan]);
   const filtered = useMemo(() => filterFlatPlanTasks(flat, search), [flat, search]);
@@ -207,95 +233,25 @@ export function PlanTasksPanelClient({
                   const isEditing =
                     editing?.epicIndex === row.epicIndex && editing?.taskIndex === row.taskIndex;
                   return (
-                    <li key={`${row.epicIndex}-${row.taskIndex}`}>
-                      {isEditing ? (
-                        <div className="space-y-2 rounded-lg border border-violet-500/25 bg-slate-950/50 p-2">
-                          <input
-                            className={`w-full ${WORKSPACE_FIELD_CLASS} text-xs`}
-                            onChange={(e) => setDraftTitle(e.target.value)}
-                            value={draftTitle}
-                          />
-                          <textarea
-                            className={`min-h-[72px] w-full resize-y ${WORKSPACE_FIELD_CLASS} text-xs`}
-                            onChange={(e) => setDraftDescription(e.target.value)}
-                            placeholder="Description (optional)"
-                            value={draftDescription}
-                          />
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              className={WORKSPACE_GHOST_BTN_CLASS}
-                              disabled={pending}
-                              onClick={cancelEdit}
-                              type="button"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              className={WORKSPACE_GHOST_BTN_CLASS}
-                              disabled={pending}
-                              onClick={saveEdit}
-                              type="button"
-                            >
-                              {pending ? 'Saving…' : 'Save'}
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div
-                          aria-pressed={isTaskSyncChecked(row.task)}
-                          className={`rounded-lg border px-2 py-1.5 outline-none transition focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
-                            isTaskSyncChecked(row.task)
-                              ? 'cursor-pointer border-emerald-500/40 bg-emerald-500/[0.12] hover:bg-emerald-500/[0.16]'
-                              : 'cursor-pointer border-white/[0.08] bg-slate-900/50 hover:bg-slate-800/60'
-                          } ${pending ? 'pointer-events-none opacity-70' : ''}`}
-                          onClick={() => toggleRowBitrixSync(row)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              toggleRowBitrixSync(row);
-                            }
-                          }}
-                          role="button"
-                          tabIndex={0}
-                          title={
-                            isTaskSyncChecked(row.task)
-                              ? 'Selected for Bitrix sync — click to exclude'
-                              : 'Not selected for Bitrix sync — click to include'
-                          }
-                        >
-                          <div className="flex flex-wrap items-start justify-between gap-2">
-                            <p className="flex min-w-0 flex-1 flex-wrap items-baseline gap-2 text-sm text-slate-200">
-                              <span className="shrink-0 tabular-nums font-mono text-[10px] font-medium text-slate-500">
-                                {row.displayNumber}
-                              </span>
-                              {row.task.bitrixSynced ? (
-                                <span
-                                  className="shrink-0 rounded border border-emerald-500/35 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-300/95"
-                                  title="This task was pushed to Bitrix"
-                                >
-                                  Bitrix
-                                </span>
-                              ) : null}
-                              <span className="min-w-0">{row.task.title}</span>
-                            </p>
-                            <button
-                              className="shrink-0 rounded border border-white/12 px-2 py-0.5 text-[10px] font-medium text-slate-400 transition hover:border-white/20 hover:text-slate-200"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                beginEdit(row);
-                              }}
-                              type="button"
-                            >
-                              Edit
-                            </button>
-                          </div>
-                          {row.task.description ? (
-                            <p className="mt-0.5 text-xs leading-snug text-slate-500">
-                              {row.task.description}
-                            </p>
-                          ) : null}
-                        </div>
-                      )}
+                    <li
+                      id={`task-${row.epicIndex}-${row.taskIndex}`}
+                      key={`${row.epicIndex}-${row.taskIndex}`}
+                    >
+                      <PlanTaskRowCard
+                        draftDescription={draftDescription}
+                        draftTitle={draftTitle}
+                        isEditing={isEditing}
+                        onBeginEdit={() => beginEdit(row)}
+                        onCancelEdit={cancelEdit}
+                        onDraftDescriptionChange={setDraftDescription}
+                        onDraftTitleChange={setDraftTitle}
+                        onSaveEdit={saveEdit}
+                        onToggleSync={() => toggleRowBitrixSync(row)}
+                        pending={pending}
+                        row={row}
+                        taskHref={taskHrefFor(row)}
+                        variant="list"
+                      />
                     </li>
                   );
                 })}
@@ -309,9 +265,25 @@ export function PlanTasksPanelClient({
       </div>
 
       <PlanTasksFullscreenModal
+        draftDescription={draftDescription}
+        draftTitle={draftTitle}
+        editing={editing}
+        onBeginEdit={beginEdit}
+        onCancelEdit={cancelEdit}
         onClose={() => setFullscreenOpen(false)}
+        onDraftDescriptionChange={setDraftDescription}
+        onDraftTitleChange={setDraftTitle}
+        onSaveEdit={saveEdit}
+        onSearchChange={setSearch}
+        onToggleSync={toggleRowBitrixSync}
         open={fullscreenOpen}
+        pending={pending}
+        phaseId={phaseId}
         plan={plan}
+        projectSlug={projectSlug}
+        saveNote={saveNote}
+        search={search}
+        syncNote={syncNote}
       />
     </div>
   );

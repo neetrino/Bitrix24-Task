@@ -102,6 +102,7 @@ export default async function ProjectPage({
               activePhaseId={activePhaseId}
               plan={plan}
               projectId={project.id}
+              projectSlug={project.slug}
               showPlanHeader={false}
             />
           </div>
