@@ -70,10 +70,12 @@ export default async function ProjectPage({
   const taskCounts = await getCachedPhaseTaskCounts(project.id, phases);
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden">
-      <div className="shrink-0">
-        <ProjectBitrixSetupPanel activePhaseId={activePhaseId} layout="edge" project={project} />
-      </div>
+    <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+      {/*
+        Bitrix "edge" controls are position:fixed — they do not occupy flow height. Do not wrap them
+        in a flex row with gap-* or an empty shrink-0 slot; that leaves a visible strip under the app header.
+      */}
+      <ProjectBitrixSetupPanel activePhaseId={activePhaseId} layout="edge" project={project} />
 
       <ProjectPlanTasksHost
         activePhaseId={activePhaseId}
