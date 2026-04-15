@@ -210,7 +210,7 @@ export function PlanTaskRowCard({
   const syncSelected = isTaskSyncChecked(row.task);
   const stateClass = syncSelected
     ? 'cursor-pointer border-emerald-500/40 bg-emerald-500/[0.12] hover:bg-emerald-500/[0.16]'
-    : 'cursor-pointer border-white/[0.08] bg-slate-900/50 hover:bg-slate-800/60';
+    : 'cursor-pointer border-slate-700 bg-slate-900 hover:bg-slate-800';
 
   return (
     <div

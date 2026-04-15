@@ -60,7 +60,7 @@ export function PhasePills({
         </div>
       </div>
       {addOpen ? (
-        <div className="mt-2 rounded-lg border border-white/10 bg-slate-950/50 p-2">
+        <div className="mt-2 rounded-lg border border-white/[0.08] bg-workspace-elevated p-2">
           <PhaseCreateForm
             onSuccess={() => setAddOpen(false)}
             projectId={projectId}

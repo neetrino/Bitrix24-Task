@@ -3,7 +3,7 @@
 import { Toaster } from 'sonner';
 import 'sonner/dist/styles.css';
 
-/** Global toast host: top-right, dark glass to match workspace chrome. */
+/** Global toast host: top-right, solid dark surface to match workspace chrome. */
 export function AppToaster() {
   return (
     <Toaster
@@ -13,7 +13,7 @@ export function AppToaster() {
       theme="dark"
       toastOptions={{
         classNames: {
-          toast: 'border border-white/10 bg-slate-900/95 backdrop-blur-xl',
+          toast: 'border border-slate-700 bg-slate-900',
         },
       }}
     />

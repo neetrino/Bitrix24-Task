@@ -8,14 +8,14 @@ import { WORKSPACE_BODY_CLASS } from '@/shared/ui/workspace-ui';
 
 /** Compact actions in the project header toolbar */
 const TOOLBAR_TRIGGER_BTN_CLASS =
-  'shrink-0 rounded-lg border border-white/12 bg-white/[0.05] px-2.5 py-1.5 text-center text-xs font-medium text-slate-200 transition hover:border-violet-400/35 hover:bg-white/[0.08] hover:text-white';
+  'shrink-0 rounded-lg border border-slate-600 bg-slate-800 px-2.5 py-1.5 text-center text-xs font-medium text-slate-200 transition hover:border-slate-500 hover:bg-slate-700 hover:text-white';
 
 /** Fixed strip on the viewport right — stacked vertically */
 const EDGE_TRIGGER_BTN_CLASS =
-  'w-full min-w-[5.25rem] rounded-lg border border-white/12 bg-slate-950/90 px-2 py-2 text-center text-[11px] font-medium leading-tight text-slate-200 shadow-lg shadow-black/40 backdrop-blur-md transition hover:border-violet-400/35 hover:bg-slate-900/95 hover:text-white sm:min-w-[5.5rem] sm:text-xs';
+  'w-full min-w-[5.25rem] rounded-lg border border-slate-600 bg-slate-900 px-2 py-2 text-center text-[11px] font-medium leading-tight text-slate-200 shadow-md shadow-black/25 transition hover:border-violet-500 hover:bg-slate-800 hover:text-white sm:min-w-[5.5rem] sm:text-xs';
 
 const PANEL_TRIGGER_BTN_CLASS =
-  'w-full rounded-lg border border-white/15 bg-white/[0.06] px-3 py-2.5 text-center text-xs font-medium text-slate-100 transition hover:border-violet-400/40 hover:bg-white/[0.09] hover:text-white';
+  'w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2.5 text-center text-xs font-medium text-slate-100 transition hover:border-slate-500 hover:bg-slate-700 hover:text-white';
 
 type ProjectForSettings = {
   id: string;
@@ -72,7 +72,7 @@ export function ProjectBitrixSetupPanel({
             only.
           </p>
           <BitrixSettingsForm project={project} />
-          <div className="border-t border-white/10 pt-4">
+          <div className="border-t border-slate-700 pt-4">
             <p className={`${WORKSPACE_BODY_CLASS} text-sm`}>
               After saving settings, run a dry-run to validate the webhook and plan (nothing is created in
               Bitrix).

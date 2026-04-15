@@ -50,17 +50,17 @@ export function WorkspaceModal({
     >
       <button
         aria-label="Close dialog"
-        className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/60"
         onClick={onClose}
         type="button"
       />
-      <div className="relative z-[101] max-h-[min(90vh,720px)] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/10 bg-slate-950/95 p-5 shadow-2xl shadow-black/60 ring-1 ring-white/5 backdrop-blur-xl">
-        <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
-          <h2 className="text-base font-semibold tracking-tight text-white" id={titleId}>
+      <div className="relative z-[101] max-h-[min(90vh,720px)] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/[0.08] bg-workspace-elevated p-5 shadow-none">
+        <div className="flex items-start justify-between gap-3 border-b border-workspace-hairline pb-3">
+          <h2 className="text-base font-semibold tracking-tight text-neutral-100" id={titleId}>
             {title}
           </h2>
           <button
-            className="shrink-0 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 text-xs font-medium text-slate-300 transition hover:border-white/25 hover:bg-white/10 hover:text-white"
+            className="shrink-0 rounded-lg border border-white/10 bg-neutral-800 px-2.5 py-1.5 text-xs font-medium text-neutral-200 transition hover:border-white/15 hover:bg-neutral-700 hover:text-white"
             onClick={onClose}
             type="button"
           >

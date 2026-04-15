@@ -16,7 +16,7 @@ type EditingTarget = { epicIndex: number; taskIndex: number };
 
 type TasksViewMode = 'grid' | 'list';
 
-/** Left strip (~20% viewport): glass backdrop, click closes drawer. */
+/** Left strip (~20% viewport): dim overlay, click closes drawer. */
 const TASKS_DRAWER_BACKDROP_WIDTH_CLASS = 'w-1/5';
 /** Right panel (~80% viewport): task list; slide-in via `tasks-drawer-panel-enter` in globals.css. */
 const TASKS_DRAWER_PANEL_WIDTH_CLASS = 'w-4/5';
@@ -110,14 +110,14 @@ export function PlanTasksFullscreenModal({
     >
       <button
         aria-label="Close dialog"
-        className={`${TASKS_DRAWER_BACKDROP_WIDTH_CLASS} h-dvh shrink-0 cursor-pointer border-0 bg-slate-950/35 p-0 backdrop-blur-xl backdrop-saturate-150 transition-colors hover:bg-slate-950/45`}
+        className={`${TASKS_DRAWER_BACKDROP_WIDTH_CLASS} h-dvh shrink-0 cursor-pointer border-0 bg-slate-950/50 p-0 transition-colors hover:bg-slate-950/60`}
         onClick={onClose}
         type="button"
       />
       <div
-        className={`relative z-[101] flex h-dvh min-h-0 shrink-0 flex-col overflow-hidden rounded-l-2xl border border-white/10 border-r-0 bg-slate-950/95 shadow-2xl shadow-black/60 ring-1 ring-white/5 backdrop-blur-xl ${TASKS_DRAWER_PANEL_WIDTH_CLASS} ${TASKS_DRAWER_PANEL_ENTER_CLASS}`}
+        className={`relative z-[101] flex h-dvh min-h-0 shrink-0 flex-col overflow-hidden rounded-l-2xl border border-slate-700 border-r-0 bg-slate-900 shadow-xl shadow-black/40 ${TASKS_DRAWER_PANEL_WIDTH_CLASS} ${TASKS_DRAWER_PANEL_ENTER_CLASS}`}
       >
-        <div className="flex shrink-0 flex-col gap-3 border-b border-white/10 px-4 py-3 sm:px-5">
+        <div className="flex shrink-0 flex-col gap-3 border-b border-slate-700 px-4 py-3 sm:px-5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-base font-semibold tracking-tight text-white" id={titleId}>
@@ -126,7 +126,7 @@ export function PlanTasksFullscreenModal({
               <p className="mt-0.5 text-xs text-slate-500">{filtered.length} tasks</p>
             </div>
             <button
-              className="shrink-0 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 text-xs font-medium text-slate-300 transition hover:border-white/25 hover:bg-white/10 hover:text-white"
+              className="shrink-0 rounded-lg border border-slate-600 bg-slate-800 px-2.5 py-1.5 text-xs font-medium text-slate-200 transition hover:border-slate-500 hover:bg-slate-700 hover:text-white"
               onClick={onClose}
               type="button"
             >
@@ -158,7 +158,7 @@ export function PlanTasksFullscreenModal({
               </a>
             </div>
             <div
-              className="flex shrink-0 rounded-lg border border-white/10 bg-slate-900/80 p-0.5 sm:ml-auto"
+              className="flex shrink-0 rounded-lg border border-slate-600 bg-slate-950 p-0.5 sm:ml-auto"
               role="group"
               aria-label="Task layout"
             >
@@ -167,7 +167,7 @@ export function PlanTasksFullscreenModal({
                 aria-pressed={viewMode === 'grid'}
                 className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
                   viewMode === 'grid'
-                    ? 'bg-white/10 text-white ring-1 ring-white/15'
+                    ? 'bg-slate-700 text-white ring-1 ring-slate-600'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
                 onClick={() => setViewMode('grid')}
@@ -180,7 +180,7 @@ export function PlanTasksFullscreenModal({
                 aria-pressed={viewMode === 'list'}
                 className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
                   viewMode === 'list'
-                    ? 'bg-white/10 text-white ring-1 ring-white/15'
+                    ? 'bg-slate-700 text-white ring-1 ring-slate-600'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
                 onClick={() => setViewMode('list')}

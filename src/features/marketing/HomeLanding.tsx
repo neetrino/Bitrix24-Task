@@ -15,49 +15,43 @@ const PREVIEW_TASKS = [
 
 function TaskPreviewPanel() {
   return (
-    <div className="relative">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -inset-4 rounded-[1.75rem] bg-gradient-to-br from-violet-500/25 via-cyan-500/15 to-transparent blur-2xl"
-      />
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950/60 shadow-2xl shadow-violet-950/40 backdrop-blur-xl">
-        <div className="border-b border-white/10 bg-gradient-to-r from-violet-500/10 to-cyan-500/10 px-5 py-4">
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-violet-200/90">
-            <SparklesGlyph className="h-4 w-4 text-cyan-300" />
-            AI task draft
-          </div>
-          <p className="mt-1 text-sm text-slate-300">
-            From your last brief: prioritized, ready to edit.
-          </p>
+    <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-workspace-elevated shadow-none">
+      <div className="border-b border-workspace-hairline bg-workspace-canvas px-5 py-4">
+        <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-neutral-300">
+          <SparklesGlyph className="h-4 w-4 text-neutral-400" />
+          AI task draft
         </div>
-        <ul className="divide-y divide-white/5 px-2 py-2">
-          {PREVIEW_TASKS.map((task) => (
-            <li className="flex items-start gap-3 px-3 py-3" key={task.id}>
-              <span
-                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-[10px] font-semibold ${
-                  task.done
-                    ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-300'
-                    : 'border-white/15 bg-white/5 text-slate-400'
-                }`}
-              >
-                {task.done ? '✓' : '○'}
-              </span>
-              <span
-                className={`text-sm leading-snug ${
-                  task.done ? 'text-slate-500 line-through decoration-slate-600' : 'text-slate-100'
-                }`}
-              >
-                {task.title}
-              </span>
-            </li>
-          ))}
-        </ul>
-        <div className="border-t border-white/10 bg-white/[0.03] px-5 py-3">
-          <p className="text-xs text-slate-400">
-            <span className="font-medium text-cyan-300/90">Next:</span> refine owners & dates, then
-            export or sync.
-          </p>
-        </div>
+        <p className="mt-1 text-sm text-neutral-400">
+          From your last brief: prioritized, ready to edit.
+        </p>
+      </div>
+      <ul className="divide-y divide-white/[0.06] px-2 py-2">
+        {PREVIEW_TASKS.map((task) => (
+          <li className="flex items-start gap-3 px-3 py-3" key={task.id}>
+            <span
+              className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-[10px] font-semibold ${
+                task.done
+                  ? 'border-emerald-700/80 bg-emerald-950 text-emerald-300'
+                  : 'border-white/10 bg-neutral-800 text-neutral-400'
+              }`}
+            >
+              {task.done ? '✓' : '○'}
+            </span>
+            <span
+              className={`text-sm leading-snug ${
+                task.done ? 'text-neutral-500 line-through decoration-neutral-600' : 'text-neutral-100'
+              }`}
+            >
+              {task.title}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <div className="border-t border-workspace-hairline bg-workspace-canvas px-5 py-3">
+        <p className="text-xs text-neutral-500">
+          <span className="font-medium text-neutral-300">Next:</span> refine owners & dates, then export or
+          sync.
+        </p>
       </div>
     </div>
   );
@@ -72,27 +66,20 @@ export function HomeLanding({ variant }: HomeLandingProps) {
   return (
     <AiShell contentClassName="mx-auto flex min-h-screen max-w-6xl flex-col justify-center gap-14 px-6 py-16 lg:gap-16">
       <section className="flex flex-col items-center text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/25 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-200/95 backdrop-blur-sm">
-          <SparklesGlyph className="h-3.5 w-3.5 text-cyan-300" />
+        <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.1] bg-workspace-elevated px-3 py-1 text-xs font-medium text-neutral-300">
+          <SparklesGlyph className="h-3.5 w-3.5 text-neutral-400" />
           PlanRelay · AI-assisted planning
         </div>
-        <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-5xl sm:leading-[1.1]">
-          Ideas become{' '}
-          <span className="bg-gradient-to-r from-violet-300 via-fuchsia-200 to-cyan-300 bg-clip-text text-transparent">
-            actionable tasks
-          </span>
+        <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-neutral-100 sm:text-5xl sm:leading-[1.1]">
+          Ideas become <span className="text-neutral-400">actionable tasks</span>
           —fast.
         </h1>
-        <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-400">
+        <p className="mt-5 max-w-2xl text-lg leading-relaxed text-neutral-400">
           Describe a goal in plain language. The assistant structures phases, subtasks, and
           handoff-ready Markdown—optionally synced to Bitrix24 when you are ready.
         </p>
-        <div className="relative mt-12">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 -m-6 rounded-full bg-cyan-400/15 blur-3xl"
-          />
-          <Link className={`relative ${AUTH_PRIMARY_CTA_HERO_CLASS}`} href={primaryHref}>
+        <div className="mt-12">
+          <Link className={AUTH_PRIMARY_CTA_HERO_CLASS} href={primaryHref}>
             {primaryLabel}
             <ArrowRightGlyph className="h-5 w-5 text-slate-800" />
           </Link>
@@ -116,8 +103,8 @@ export function HomeLanding({ variant }: HomeLandingProps) {
 function FeatureStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="text-center lg:text-left">
-      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="mt-1 text-sm font-medium text-slate-200">{value}</div>
+      <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">{label}</div>
+      <div className="mt-1 text-sm font-medium text-neutral-300">{value}</div>
     </div>
   );
 }

@@ -45,7 +45,7 @@ export function PhaseSection({
           </Link>
         ))}
       </div>
-      <div className="mt-6 border-t border-white/10 pt-6">
+      <div className="mt-6 border-t border-slate-700 pt-6">
         <PhaseCreateForm projectId={projectId} />
       </div>
     </section>

@@ -1,37 +1,40 @@
-/** Glass panels — visually aligned with `HomeLanding` / `AiShell`. */
+/**
+ * Calm dark workspace — ChatGPT-like: neutral greys, hairline borders, violet only for primary CTAs.
+ */
 export const WORKSPACE_PANEL_CLASS =
-  'rounded-2xl border border-white/10 bg-slate-950/55 shadow-xl shadow-black/30 backdrop-blur-xl';
+  'rounded-2xl border border-white/[0.08] bg-workspace-elevated shadow-none';
 
-export const WORKSPACE_H2_CLASS = 'text-lg font-semibold text-slate-100';
+export const WORKSPACE_H2_CLASS = 'text-lg font-semibold text-neutral-100';
 
-export const WORKSPACE_BODY_CLASS = 'text-sm text-slate-400';
+export const WORKSPACE_BODY_CLASS = 'text-sm text-neutral-400';
 
-export const WORKSPACE_LABEL_CLASS = 'text-sm font-medium text-slate-300';
+export const WORKSPACE_LABEL_CLASS = 'text-sm font-medium text-neutral-300';
 
 /** Inputs and textareas on dark workspace surfaces */
 export const WORKSPACE_FIELD_CLASS =
-  'rounded-lg border border-white/15 bg-slate-950/40 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 shadow-sm focus:border-violet-400/50 focus:outline-none focus:ring-2 focus:ring-violet-500/25';
+  'rounded-lg border border-white/10 bg-workspace-canvas px-3 py-2 text-sm text-neutral-200 placeholder:text-neutral-500 shadow-none focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/25';
 
 export const WORKSPACE_PRIMARY_BTN_CLASS =
-  'rounded-lg border border-cyan-300/45 bg-gradient-to-b from-white to-slate-100 px-4 py-2 text-sm font-semibold text-slate-900 shadow-[0_0_24px_-8px_rgba(34,211,238,0.35)] transition hover:from-slate-50 hover:to-white disabled:opacity-60';
+  'rounded-lg border border-neutral-300 bg-neutral-100 px-4 py-2 text-sm font-semibold text-neutral-900 shadow-sm transition hover:bg-white disabled:opacity-60';
 
 export const WORKSPACE_ACCENT_BTN_CLASS =
-  'rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-violet-500 disabled:opacity-60';
+  'rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-violet-500 disabled:opacity-60';
 
 export const WORKSPACE_GHOST_BTN_CLASS =
-  'rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-sm text-slate-100 transition hover:border-white/25 hover:bg-white/10 disabled:opacity-60';
+  'rounded-lg border border-white/10 bg-neutral-800/80 px-3 py-1.5 text-sm text-neutral-200 transition hover:border-white/15 hover:bg-neutral-800 disabled:opacity-60';
 
 export const WORKSPACE_LINK_CLASS =
-  'text-sm text-violet-200/85 transition hover:text-white';
+  'text-sm text-neutral-400 transition hover:text-neutral-200';
 
+/** Sidebar-style selection (minimal color — reads like ChatGPT thread highlight). */
 export const WORKSPACE_PHASE_ACTIVE_CLASS =
-  'rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-3 py-1 text-sm font-medium text-white shadow-md shadow-violet-900/35';
+  'rounded-lg border border-white/[0.06] bg-neutral-800 px-3 py-1 text-sm font-medium text-neutral-100';
 
 export const WORKSPACE_PHASE_IDLE_CLASS =
-  'rounded-full border border-white/15 bg-white/5 px-3 py-1 text-sm text-slate-300 transition hover:border-white/25 hover:bg-white/10 hover:text-white';
+  'rounded-lg border border-transparent px-3 py-1 text-sm text-neutral-400 transition hover:bg-white/[0.06] hover:text-neutral-200';
 
 export const WORKSPACE_INNER_SCROLL_CLASS =
-  'max-h-80 space-y-3 overflow-y-auto rounded-xl border border-white/10 bg-slate-950/40 p-4 text-sm';
+  'max-h-80 space-y-3 overflow-y-auto rounded-xl border border-white/[0.08] bg-workspace-canvas p-4 text-sm';
 
 export const WORKSPACE_CODE_CLASS =
-  'rounded-md bg-white/10 px-1.5 py-0.5 font-mono text-xs text-cyan-200/90';
+  'rounded-md bg-neutral-800 px-1.5 py-0.5 font-mono text-xs text-neutral-300';

@@ -48,12 +48,12 @@ export function BitrixSyncConfirmDialog({
     >
       <button
         aria-label="Close dialog"
-        className="absolute inset-0 bg-black/65 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/65"
         onClick={onCancel}
         type="button"
       />
       <div
-        className={`relative ${PANEL_Z} w-full max-w-md rounded-2xl border border-white/10 bg-slate-950/95 p-5 shadow-2xl shadow-black/60 ring-1 ring-white/5 backdrop-blur-xl`}
+        className={`relative ${PANEL_Z} w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-5 shadow-xl shadow-black/40`}
       >
         <h2 className="text-base font-semibold tracking-tight text-white" id={titleId}>
           Sync to Bitrix24?

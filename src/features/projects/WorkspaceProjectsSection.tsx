@@ -118,46 +118,40 @@ export function WorkspaceProjectsSection({ initialProjects }: { initialProjects:
         </button>
       </form>
 
-      <div className="relative">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -inset-1 rounded-[1.25rem] bg-gradient-to-br from-violet-500/15 via-transparent to-cyan-500/10 blur-2xl"
-        />
-        <div className={`relative overflow-hidden ${WORKSPACE_PANEL_CLASS}`}>
-          <div className="border-b border-white/10 bg-gradient-to-r from-violet-500/10 to-cyan-500/10 px-5 py-4">
-            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-violet-200/90">
-              <SparklesGlyph className="h-4 w-4 text-cyan-300" />
-              All projects
-            </div>
-            <p className="mt-1 text-sm text-slate-400">Open a project to continue planning.</p>
+      <div className={`overflow-hidden ${WORKSPACE_PANEL_CLASS}`}>
+        <div className="border-b border-workspace-hairline bg-workspace-canvas px-5 py-4">
+          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-neutral-300">
+            <SparklesGlyph className="h-4 w-4 text-neutral-400" />
+            All projects
           </div>
-          <ul className="divide-y divide-white/5">
-            {rows.length === 0 ? (
-              <li className="px-5 py-8 text-sm text-slate-400">No projects yet — add one above.</li>
-            ) : (
-              rows.map((p) => (
-                <li key={p.id}>
-                  {p.pending ? (
-                    <div className="flex items-center justify-between gap-4 px-5 py-4 opacity-90">
-                      <span className="font-medium text-slate-100">{p.name}</span>
-                      <span className="shrink-0 text-xs font-medium text-cyan-300/90">Creating…</span>
-                    </div>
-                  ) : (
-                    <Link
-                      className="flex items-center justify-between gap-4 px-5 py-4 transition hover:bg-white/[0.04]"
-                      href={`/app/projects/${p.slug}`}
-                    >
-                      <span className="font-medium text-slate-100">{p.name}</span>
-                      <span className="shrink-0 text-xs tabular-nums text-slate-500">
-                        {p.updatedAt.slice(0, 10)}
-                      </span>
-                    </Link>
-                  )}
-                </li>
-              ))
-            )}
-          </ul>
+          <p className="mt-1 text-sm text-neutral-500">Open a project to continue planning.</p>
         </div>
+        <ul className="divide-y divide-white/[0.06]">
+          {rows.length === 0 ? (
+            <li className="px-5 py-8 text-sm text-neutral-500">No projects yet — add one above.</li>
+          ) : (
+            rows.map((p) => (
+              <li key={p.id}>
+                {p.pending ? (
+                  <div className="flex items-center justify-between gap-4 px-5 py-4 opacity-90">
+                    <span className="font-medium text-neutral-100">{p.name}</span>
+                    <span className="shrink-0 text-xs font-medium text-neutral-400">Creating…</span>
+                  </div>
+                ) : (
+                  <Link
+                    className="flex items-center justify-between gap-4 px-5 py-4 transition hover:bg-white/[0.04]"
+                    href={`/app/projects/${p.slug}`}
+                  >
+                    <span className="font-medium text-neutral-100">{p.name}</span>
+                    <span className="shrink-0 text-xs tabular-nums text-neutral-500">
+                      {p.updatedAt.slice(0, 10)}
+                    </span>
+                  </Link>
+                )}
+              </li>
+            ))
+          )}
+        </ul>
       </div>
     </>
   );

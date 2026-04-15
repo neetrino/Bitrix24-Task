@@ -30,7 +30,7 @@ export function SignInForm() {
       <label className="flex flex-col gap-2 text-sm font-medium text-slate-200" htmlFor="email">
         Email
         <input
-          className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:border-violet-400/60 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+          className="rounded-xl border border-slate-600 bg-slate-950 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
           id="email"
           name="email"
           placeholder="you@company.com"
