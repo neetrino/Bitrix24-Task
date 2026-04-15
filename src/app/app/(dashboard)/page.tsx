@@ -19,14 +19,16 @@ export default async function AppDashboardPage() {
     <AppMainConstrained>
       <div className="flex flex-col gap-10">
         <section className="flex flex-col gap-6">
-          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/[0.1] bg-workspace-elevated px-3 py-1 text-xs font-medium text-neutral-300">
-            <SparklesGlyph className="h-3.5 w-3.5 text-neutral-400" />
-            Workspace
-          </div>
           <div className="flex flex-col gap-3">
-            <h1 className="text-3xl font-semibold tracking-tight text-neutral-100 sm:text-4xl">
-              Your <span className="text-neutral-400">projects</span>
-            </h1>
+            <div className="flex flex-row flex-wrap items-baseline justify-start gap-2 sm:gap-3">
+              <h1 className="min-w-0 text-3xl font-semibold leading-tight tracking-tight text-neutral-100 sm:text-4xl">
+                Your <span className="text-neutral-400">projects</span>
+              </h1>
+              <div className="inline-flex w-fit shrink-0 items-center gap-2 rounded-full border border-white/[0.1] bg-workspace-elevated px-3 py-1 text-xs font-medium leading-none text-neutral-300">
+                <SparklesGlyph className="h-3.5 w-3.5 text-neutral-400" />
+                Workspace
+              </div>
+            </div>
             <p className={`max-w-2xl ${WORKSPACE_BODY_CLASS} text-base leading-relaxed`}>
               Create a project to plan with AI, manage phases, and export or sync to Bitrix24 when you are
               ready.
