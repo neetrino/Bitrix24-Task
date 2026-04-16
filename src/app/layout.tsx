@@ -7,6 +7,10 @@ export const metadata: Metadata = {
   title: 'Aibonacci',
   description:
     'AI-assisted planning with Bitrix24 sync — each step builds on project history, like Fibonacci terms build on the previous ones.',
+  icons: {
+    icon: [{ url: '/aibonacci-logo.png', type: 'image/png' }],
+    apple: '/aibonacci-logo.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

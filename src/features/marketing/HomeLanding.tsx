@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { AiShell } from '@/features/marketing/AiShell';
 import { AUTH_PRIMARY_CTA_HERO_CLASS } from '@/shared/ui/auth-cta-classes';
 import { ArrowRightGlyph, SparklesGlyph } from '@/shared/ui/brand-icons';
+import { SiteLogoImage } from '@/shared/ui/site-logo';
 
 type HomeLandingProps = {
   variant: 'signed_out' | 'active' | 'pending';
@@ -67,7 +68,7 @@ export function HomeLanding({ variant }: HomeLandingProps) {
     <AiShell contentClassName="mx-auto flex min-h-screen max-w-6xl flex-col justify-center gap-14 px-6 py-16 lg:gap-16">
       <section className="flex flex-col items-center text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.1] bg-workspace-elevated px-3 py-1 text-xs font-medium text-neutral-300">
-          <SparklesGlyph className="h-3.5 w-3.5 text-neutral-400" />
+          <SiteLogoImage className="h-3.5 w-auto" heightPx={14} priority />
           Aibonacci · each step builds on the last
         </div>
         <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-neutral-100 sm:text-5xl sm:leading-[1.1]">

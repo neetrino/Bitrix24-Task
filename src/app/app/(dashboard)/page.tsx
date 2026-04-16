@@ -2,7 +2,7 @@ import { WorkspaceProjectsSection } from '@/features/projects/WorkspaceProjectsS
 import { listProjectsForUser } from '@/features/projects/project-queries';
 import { requireActiveUserId } from '@/shared/lib/session';
 import { AppMainConstrained } from '@/shared/ui/AppMainConstrained';
-import { SparklesGlyph } from '@/shared/ui/brand-icons';
+import { SiteLogoImage } from '@/shared/ui/site-logo';
 import { WORKSPACE_BODY_CLASS } from '@/shared/ui/workspace-ui';
 
 export default async function AppDashboardPage() {
@@ -25,7 +25,7 @@ export default async function AppDashboardPage() {
                 Your <span className="text-violet-400">projects</span>
               </h1>
               <div className="inline-flex w-fit shrink-0 items-center gap-2 rounded-full border border-violet-500/35 bg-violet-500/10 px-3 py-1 text-xs font-medium leading-none text-violet-200">
-                <SparklesGlyph className="h-3.5 w-3.5 text-violet-400" />
+                <SiteLogoImage className="h-3.5 w-auto" heightPx={14} />
                 Workspace
               </div>
             </div>

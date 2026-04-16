@@ -3,10 +3,11 @@ import { AccessStatus } from '@prisma/client';
 import NextAuth from 'next-auth';
 import Email from 'next-auth/providers/email';
 import { Resend } from 'resend';
+import { buildMagicLinkEmailContent } from '@/features/auth/magic-link-email-html';
 import { prisma } from '@/shared/lib/prisma';
 import { logger } from '@/shared/lib/logger';
 
-const fromFallback = 'Aibonacci <onboarding@resend.dev>';
+const fromFallback = 'Aibonacci.am <onboarding@resend.dev>';
 
 const SECONDS_PER_DAY = 86_400;
 const SESSION_MAX_AGE_SECONDS = 30 * SECONDS_PER_DAY;
@@ -68,11 +69,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
         const resend = new Resend(apiKey);
         const from = typeof provider.from === 'string' ? provider.from : fromFallback;
+        const { subject, html, text } = buildMagicLinkEmailContent(url);
         const { error } = await resend.emails.send({
           from,
           to: identifier,
-          subject: 'Sign in to Aibonacci',
-          html: `<p><a href="${url}">Sign in to Aibonacci</a></p>`,
+          subject,
+          html,
+          text,
         });
         if (error) {
           logger.error({ err: error, email: identifier }, 'Resend send failed');
