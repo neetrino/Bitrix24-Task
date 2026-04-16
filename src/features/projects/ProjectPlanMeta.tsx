@@ -1,7 +1,5 @@
-import {
-  DECOMPOSITION_LEVEL_DESCRIPTIONS,
-  type PlanPayload,
-} from '@/shared/domain/plan';
+import type { PlanPayload } from '@/shared/domain/plan-defaults';
+import { ProjectRailQuickActions } from '@/features/projects/ProjectRailQuickActions';
 import { ProjectWorkspaceRailHeader } from '@/features/projects/ProjectWorkspaceRailHeader';
 import type { BitrixSettingsProject } from '@/features/projects/BitrixProjectSettingsDialog';
 import { SparklesGlyph } from '@/shared/ui/brand-icons';
@@ -30,36 +28,24 @@ export function ProjectPlanMeta({
     Boolean(plan.project_title) && plan.project_title !== projectName;
 
   return (
-    <div className="shrink-0 border-b border-workspace-hairline px-3 py-3">
-      <div className="flex items-start gap-2">
-        <SparklesGlyph className="mt-2 h-3.5 w-3.5 shrink-0 text-neutral-400" />
-        <div className="min-w-0 flex-1">
-          <ProjectWorkspaceRailHeader
+    <div className="shrink-0 border-b border-workspace-hairline px-2 py-3">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2">
+        <SparklesGlyph className="col-start-1 row-start-1 h-3.5 w-3.5 shrink-0 self-center text-neutral-400" />
+        <div className="col-start-2 row-start-1 min-w-0">
+          <ProjectWorkspaceRailHeader activeSlug={activeSlug} projects={projects} />
+        </div>
+        {showSubtitle ? (
+          <p className="col-start-2 mt-2 text-left text-sm font-medium text-neutral-300">
+            {plan.project_title}
+          </p>
+        ) : null}
+        <div className="col-span-2 mt-2">
+          <ProjectRailQuickActions
             activePhaseId={activePhaseId}
-            activeSlug={activeSlug}
-            project={bitrixProject}
-            projects={projects}
+            bitrixProject={bitrixProject}
+            plan={plan}
+            projectName={projectName}
           />
-          {showSubtitle ? (
-            <p className="mt-2 text-left text-sm font-medium text-neutral-300">{plan.project_title}</p>
-          ) : null}
-          <div className="mt-2 text-left text-xs leading-relaxed text-neutral-500">
-            {plan.decomposition_level ? (
-              <p title="Relative depth; task counts scale with project size">
-                <span className="font-medium text-neutral-400">Decomposition:</span>{' '}
-                {plan.decomposition_level} —{' '}
-                {DECOMPOSITION_LEVEL_DESCRIPTIONS[plan.decomposition_level]}
-              </p>
-            ) : (
-              <p className="text-neutral-500">
-                No decomposition level yet — the assistant should ask coarse / balanced / fine
-                before a full breakdown.
-              </p>
-            )}
-            {plan.decomposition_estimate_note ? (
-              <p className="mt-1 text-neutral-500">{plan.decomposition_estimate_note}</p>
-            ) : null}
-          </div>
         </div>
       </div>
     </div>

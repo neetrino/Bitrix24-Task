@@ -4,6 +4,8 @@ import { createContext, useContext, type ReactNode } from 'react';
 
 type ProjectPlanTasksContextValue = {
   openTasksForPhase: (phaseId: string | null) => void;
+  /** `null` = Main phase, `string` = phase id, `undefined` = panel closed. */
+  openTasksPhaseId: string | null | undefined;
 };
 
 const ProjectPlanTasksContext = createContext<ProjectPlanTasksContextValue | null>(null);

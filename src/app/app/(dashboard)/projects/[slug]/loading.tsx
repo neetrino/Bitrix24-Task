@@ -9,7 +9,7 @@ export default function ProjectPageLoading() {
   return (
     <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden">
       <div className={PROJECT_TASKS_CHAT_GRID_CLASS}>
-        <aside className="order-2 flex min-h-0 flex-1 flex-col overflow-hidden bg-workspace-rail lg:order-1 lg:border-r lg:border-workspace-hairline lg:pl-5">
+        <aside className="order-2 flex min-h-0 flex-1 flex-col overflow-hidden bg-workspace-rail lg:order-1 lg:border-r lg:border-workspace-hairline lg:px-5">
           <div className="flex flex-col gap-3 px-2 py-4">
             <div className="h-5 w-40 animate-pulse rounded bg-white/[0.08]" />
             <div className="h-4 w-24 animate-pulse rounded bg-white/[0.05]" />

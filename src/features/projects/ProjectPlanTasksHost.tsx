@@ -263,7 +263,13 @@ export function ProjectPlanTasksHost({
     [cachePlanForCurrentModal, effectivePhaseId, modalPlan, plan, projectId],
   );
 
-  const contextValue = useMemo(() => ({ openTasksForPhase }), [openTasksForPhase]);
+  const contextValue = useMemo(
+    () => ({
+      openTasksForPhase,
+      openTasksPhaseId: modalOpen ? modalPhaseId : undefined,
+    }),
+    [modalOpen, modalPhaseId, openTasksForPhase],
+  );
 
   return (
     <ProjectPlanTasksProvider value={contextValue}>

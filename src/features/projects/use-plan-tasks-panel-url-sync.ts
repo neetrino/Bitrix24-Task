@@ -181,8 +181,21 @@ export function usePlanTasksPanelUrlSync({
       }
       const params = setAllTasksPanelQuery(new URLSearchParams(searchParamsString), targetPhaseId);
       replaceUrlShallow(`${pathname}?${params.toString()}`);
+      // `useSearchParams()` does not reliably re-render after `history.replaceState`
+      // (Next 15 + Turbopack), so the URL effect below may not fire. Open the panel
+      // imperatively to guarantee a response; the effect still covers deep-links
+      // and browser back/forward.
+      void loadModalForPhase(targetPhaseId);
     },
-    [closeModal, modalOpen, modalPhaseId, pathname, replaceUrlShallow, searchParamsString],
+    [
+      closeModal,
+      loadModalForPhase,
+      modalOpen,
+      modalPhaseId,
+      pathname,
+      replaceUrlShallow,
+      searchParamsString,
+    ],
   );
 
   useEffect(() => {
