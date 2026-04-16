@@ -6,6 +6,7 @@ import { savePlanSnapshot } from '@/features/plan-editor/plan-actions';
 import { setPlanTaskSyncSelected } from '@/features/bitrix-sync/plan-sync-actions';
 import {
   isTaskSyncChecked,
+  removeTaskFromPlan,
   updateTaskInPlan,
   updateTaskSyncInPlan,
   type FlatPlanTaskRow,
@@ -189,6 +190,54 @@ export function ProjectPlanTasksHost({
     setDraftDescription('');
   }, []);
 
+  const deleteEdit = useCallback(() => {
+    if (!editing) return;
+    if (!globalThis.confirm('Delete this task? This cannot be undone.')) return;
+
+    const next = removeTaskFromPlan(effectivePlan, editing.epicIndex, editing.taskIndex);
+    const capturedEditing = editing;
+    const capturedDraftTitle = draftTitle;
+    const capturedDraftDescription = draftDescription;
+    const prevMain = plan;
+    const prevModal = modalPlan;
+
+    if (modalPlan !== null) {
+      setModalPlan(next);
+    } else {
+      setPlan(next);
+    }
+    cachePlanForCurrentModal(next);
+    setEditing(null);
+    setDraftTitle('');
+    setDraftDescription('');
+
+    startSaveTransition(async () => {
+      const res = await savePlanSnapshot(projectId, effectivePhaseId, JSON.stringify(next));
+      if (res && 'error' in res && res.error) {
+        toast.error(res.error);
+        if (prevModal !== null) {
+          setModalPlan(prevModal);
+        } else {
+          setPlan(prevMain);
+        }
+        cachePlanForCurrentModal(prevModal ?? prevMain);
+        setEditing(capturedEditing);
+        setDraftTitle(capturedDraftTitle);
+        setDraftDescription(capturedDraftDescription);
+      }
+    });
+  }, [
+    cachePlanForCurrentModal,
+    draftDescription,
+    draftTitle,
+    editing,
+    effectivePhaseId,
+    effectivePlan,
+    modalPlan,
+    plan,
+    projectId,
+  ]);
+
   const saveEdit = useCallback(() => {
     if (!editing) return;
     const next = updateTaskInPlan(
@@ -296,6 +345,7 @@ export function ProjectPlanTasksHost({
         onBeginEdit={beginEdit}
         onCancelEdit={cancelEdit}
         onClose={closeModal}
+        onDeleteEdit={deleteEdit}
         onDraftDescriptionChange={setDraftDescription}
         onDraftTitleChange={setDraftTitle}
         onSaveEdit={saveEdit}

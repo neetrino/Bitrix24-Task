@@ -1,4 +1,4 @@
-import type { EpicPayload, PlanPayload, TaskPayload } from '@/shared/domain/plan';
+import { DEFAULT_PLAN, type EpicPayload, type PlanPayload, type TaskPayload } from '@/shared/domain/plan';
 
 export type FlatPlanTaskRow = {
   displayNumber: number;
@@ -116,4 +116,25 @@ export function updateTaskInPlan(
     return { ...epic, tasks };
   });
   return { ...plan, epics };
+}
+
+/** Removes a task; drops empty epics. If nothing remains, restores a minimal single-epic backlog. */
+export function removeTaskFromPlan(
+  plan: PlanPayload,
+  epicIndex: number,
+  taskIndex: number,
+): PlanPayload {
+  const nextEpics = plan.epics
+    .map((epic, ei) => {
+      if (ei !== epicIndex) return epic;
+      const tasks = epic.tasks.filter((_, ti) => ti !== taskIndex);
+      return { ...epic, tasks };
+    })
+    .filter((epic) => epic.tasks.length > 0);
+
+  if (nextEpics.length === 0) {
+    return { ...plan, epics: DEFAULT_PLAN.epics };
+  }
+
+  return { ...plan, epics: nextEpics };
 }

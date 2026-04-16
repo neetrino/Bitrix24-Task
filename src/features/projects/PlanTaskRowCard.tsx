@@ -11,6 +11,12 @@ const LIST_WRAP =
 const GRID_WRAP =
   'rounded-xl border px-3 py-3 shadow-none outline-none transition focus-visible:ring-2 focus-visible:ring-violet-500/40';
 
+const DELETE_TASK_BTN_CLASS =
+  'rounded-lg border border-red-500/30 bg-red-950/35 px-3 py-1.5 text-sm text-red-200/90 transition hover:border-red-500/45 hover:bg-red-950/55 disabled:opacity-60';
+
+const SAVE_TASK_BTN_CLASS =
+  'rounded-lg border border-emerald-500/35 bg-emerald-950/40 px-3 py-1.5 text-sm text-emerald-100/95 transition hover:border-emerald-400/50 hover:bg-emerald-900/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/35 disabled:opacity-60';
+
 const SYNC_BTN_BASE =
   'shrink-0 rounded-lg border text-[10px] font-semibold uppercase tracking-wide transition focus-visible:outline-none focus-visible:ring-2 disabled:opacity-50';
 
@@ -128,6 +134,7 @@ type EditFormProps = {
   onDraftDescriptionChange: (value: string) => void;
   onCancelEdit: () => void;
   onSaveEdit: () => void;
+  onDeleteEdit: () => void;
   savePending: boolean;
 };
 
@@ -138,6 +145,7 @@ function PlanTaskRowEditForm({
   onDraftDescriptionChange,
   onCancelEdit,
   onSaveEdit,
+  onDeleteEdit,
   savePending,
 }: EditFormProps) {
   return (
@@ -155,12 +163,17 @@ function PlanTaskRowEditForm({
         placeholder="Description (optional)"
         value={draftDescription}
       />
-      <div className="flex flex-wrap gap-2">
-        <button className={WORKSPACE_GHOST_BTN_CLASS} disabled={savePending} onClick={onCancelEdit} type="button">
-          Cancel
-        </button>
-        <button className={WORKSPACE_GHOST_BTN_CLASS} disabled={savePending} onClick={onSaveEdit} type="button">
-          {savePending ? 'Saving…' : 'Save'}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-2">
+          <button className={WORKSPACE_GHOST_BTN_CLASS} disabled={savePending} onClick={onCancelEdit} type="button">
+            Cancel
+          </button>
+          <button className={SAVE_TASK_BTN_CLASS} disabled={savePending} onClick={onSaveEdit} type="button">
+            {savePending ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+        <button className={DELETE_TASK_BTN_CLASS} disabled={savePending} onClick={onDeleteEdit} type="button">
+          Delete
         </button>
       </div>
     </div>
@@ -178,6 +191,7 @@ export function PlanTaskRowCard({
   onBeginEdit,
   onCancelEdit,
   onSaveEdit,
+  onDeleteEdit,
   onToggleSync,
   savePending,
 }: {
@@ -191,6 +205,7 @@ export function PlanTaskRowCard({
   onBeginEdit: () => void;
   onCancelEdit: () => void;
   onSaveEdit: () => void;
+  onDeleteEdit: () => void;
   onToggleSync: () => void;
   /** Only for inline save (Cancel/Save); does not block sync toggles on other cards. */
   savePending: boolean;
@@ -201,6 +216,7 @@ export function PlanTaskRowCard({
         draftDescription={draftDescription}
         draftTitle={draftTitle}
         onCancelEdit={onCancelEdit}
+        onDeleteEdit={onDeleteEdit}
         onDraftDescriptionChange={onDraftDescriptionChange}
         onDraftTitleChange={onDraftTitleChange}
         onSaveEdit={onSaveEdit}
