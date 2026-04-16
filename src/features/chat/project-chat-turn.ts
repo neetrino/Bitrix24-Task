@@ -1,6 +1,7 @@
 import { revalidatePath } from 'next/cache';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import { APIUserAbortError } from 'openai/error';
+import { CHAT_MODEL_HISTORY_LIMIT } from '@/features/chat/chat-limits';
 import { PLAN_SYSTEM_PROMPT } from '@/features/chat/prompts';
 import { normalizePlanFromAi, type PlanPayload } from '@/shared/domain/plan';
 import { getOpenAI } from '@/shared/lib/openai';
@@ -15,12 +16,23 @@ export type RunProjectChatTurnResult =
   | { error: string }
   | { cancelled: true };
 
+type ProjectForChatModel = Parameters<typeof getEffectiveChatModel>[0] & {
+  id: string;
+  slug: string;
+};
+
 export type RunProjectChatTurnParams = {
   userId: string;
   projectId: string;
   phaseId: string | null;
   message: string;
   signal?: AbortSignal;
+  /**
+   * Pre-loaded project row. When provided, skips the duplicate
+   * `project.findFirst` inside the preflight (the caller already verified
+   * ownership by slug). Falls back to an id/ownerId lookup when omitted.
+   */
+  project?: ProjectForChatModel;
 };
 
 type PlanSnapshotRow = { version: number; payload: unknown } | null;
@@ -68,8 +80,6 @@ function buildChatCompletionMessages(
   ];
 }
 
-type ProjectForChatModel = Parameters<typeof getEffectiveChatModel>[0];
-
 async function loadOpenAiMessagesAndModel(
   project: ProjectForChatModel,
   projectId: string,
@@ -80,17 +90,24 @@ async function loadOpenAiMessagesAndModel(
   latestSnapshot: PlanSnapshotRow;
   priorPlan: PlanPayload | undefined;
 }> {
-  const history = await prisma.message.findMany({
-    where: { projectId, phaseId },
-    orderBy: { createdAt: 'asc' },
-    take: 40,
-  });
+  // Parallel: history and latest snapshot are independent reads. Newest
+  // `CHAT_MODEL_HISTORY_LIMIT` rows are fetched desc and reversed so the LLM
+  // sees ascending chronological order without dropping recent messages.
+  const [historyDesc, latestSnapshot] = await Promise.all([
+    prisma.message.findMany({
+      where: { projectId, phaseId },
+      orderBy: { createdAt: 'desc' },
+      take: CHAT_MODEL_HISTORY_LIMIT,
+      select: { role: true, content: true },
+    }),
+    prisma.planSnapshot.findFirst({
+      where: { projectId, phaseId },
+      orderBy: { updatedAt: 'desc' },
+      select: { version: true, payload: true },
+    }),
+  ]);
 
-  const latestSnapshot = await prisma.planSnapshot.findFirst({
-    where: { projectId, phaseId },
-    orderBy: { updatedAt: 'desc' },
-  });
-
+  const history = historyDesc.reverse();
   const priorPlan = latestSnapshot?.payload as PlanPayload | undefined;
   const messages = buildChatCompletionMessages(history, priorPlan);
   const model = getEffectiveChatModel(project);
@@ -106,9 +123,12 @@ async function requestPlanJsonFromOpenAi(
   model: string,
   messages: ChatCompletionMessageParam[],
   signal: AbortSignal | undefined,
-  revalidateProject: () => void,
   projectId: string,
 ): Promise<OpenAiJsonOutcome> {
+  // Note: preflight already revalidated project data after saving the user
+  // message, so OpenAI failure/cancel branches do not need to invalidate the
+  // cache again. Blowing cache tags on transient AI errors made every retry
+  // pay the full RSC refetch cost on the next navigation.
   try {
     const completion = await getOpenAI().chat.completions.create(
       {
@@ -120,17 +140,14 @@ async function requestPlanJsonFromOpenAi(
     );
     const content = completion.choices[0]?.message?.content;
     if (!content) {
-      revalidateProject();
       return { kind: 'error', message: 'Empty AI response' };
     }
     return { kind: 'success', rawJson: JSON.parse(content) as unknown };
   } catch (e) {
     if (isCancellationError(e)) {
-      revalidateProject();
       return { kind: 'cancelled' };
     }
     logger.error({ err: e, projectId }, 'OpenAI chat failed');
-    revalidateProject();
     return { kind: 'error', message: 'AI request failed. Check OpenAI_API_Key and try again.' };
   }
 }
@@ -143,7 +160,7 @@ type PreflightOk = {
 async function runChatPreflight(
   params: RunProjectChatTurnParams,
 ): Promise<{ error: string } | PreflightOk> {
-  const { userId, projectId, phaseId, message } = params;
+  const { userId, projectId, phaseId, message, project: preloadedProject } = params;
   const composed = message.trim();
 
   if (!composed) {
@@ -152,9 +169,13 @@ async function runChatPreflight(
 
   await enforceRateLimit(`chat:${userId}`);
 
-  const project = await prisma.project.findFirst({
-    where: { id: projectId, ownerId: userId },
-  });
+  // Reuse the project already loaded by the caller (e.g. the chat API route)
+  // to avoid a second `project.findFirst` on the same request.
+  const project =
+    preloadedProject ??
+    (await prisma.project.findFirst({
+      where: { id: projectId, ownerId: userId },
+    }));
   if (!project) {
     return { error: 'Project not found' };
   }
@@ -182,6 +203,10 @@ async function runChatPreflight(
     },
   });
 
+  // Revalidate eagerly so any subsequent `router.refresh()` (success, error
+  // or abort path) surfaces the newly persisted user message.
+  revalidateProject();
+
   return { project, revalidateProject };
 }
 
@@ -195,7 +220,6 @@ async function persistAssistantPlanFromJson(
 ): Promise<{ error: string } | undefined> {
   if (!rawJson || typeof rawJson !== 'object') {
     logger.warn({ rawJson }, 'AI chat JSON was not an object');
-    revalidateProject();
     return { error: 'AI returned an invalid plan. Try rephrasing your message.' };
   }
 
@@ -207,7 +231,6 @@ async function persistAssistantPlanFromJson(
     plan = normalizePlanFromAi(body.plan, priorPlan);
   } catch (e) {
     logger.warn({ err: e, rawJson }, 'AI plan normalization failed');
-    revalidateProject();
     return { error: 'AI returned an invalid plan. Try rephrasing your message.' };
   }
 
@@ -254,13 +277,7 @@ export async function runProjectChatTurn(
     phaseId,
   );
 
-  const openAiOutcome = await requestPlanJsonFromOpenAi(
-    model,
-    messages,
-    signal,
-    revalidateProject,
-    projectId,
-  );
+  const openAiOutcome = await requestPlanJsonFromOpenAi(model, messages, signal, projectId);
 
   if (openAiOutcome.kind === 'cancelled') {
     return { cancelled: true };

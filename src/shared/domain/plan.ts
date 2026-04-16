@@ -1,28 +1,43 @@
 import { z } from 'zod';
+import {
+  DEFAULT_PLAN,
+  type DecompositionLevel,
+  type EpicPayload,
+  type PlanPayload,
+  type TaskPayload,
+} from '@/shared/domain/plan-defaults';
+
+/**
+ * Server-side plan module: owns the Zod schemas and normalization logic.
+ *
+ * Do NOT import this from `'use client'` components — doing so drags the Zod
+ * runtime into the browser bundle. Use `@/shared/domain/plan-defaults` for
+ * types and constants on the client.
+ */
+
+export {
+  DEFAULT_PLAN,
+  DECOMPOSITION_LEVEL_DESCRIPTIONS,
+  DECOMPOSITION_LEVEL_RANGES,
+} from '@/shared/domain/plan-defaults';
+
+export type {
+  DecompositionLevel,
+  EpicMode,
+  EpicPayload,
+  PlanPayload,
+  TaskPayload,
+  TaskSize,
+} from '@/shared/domain/plan-defaults';
 
 export const epicModeSchema = z.enum(['scrum', 'parent_tasks']);
 
 /** How finely to split work before generating the full backlog (not per-task labels). */
 export const decompositionLevelSchema = z.enum(['coarse', 'balanced', 'fine']);
 
-export type DecompositionLevel = z.infer<typeof decompositionLevelSchema>;
-
-/** What each level *means* (depth), without implying a universal number of tasks. */
-export const DECOMPOSITION_LEVEL_DESCRIPTIONS: Record<DecompositionLevel, string> = {
-  coarse:
-    'Fewer, larger chunks — main areas or milestones only (depth is shallow; total tasks scales with project size).',
-  balanced:
-    'Middle depth — modules and main flows broken down; more tasks than coarse, not every micro-step.',
-  fine:
-    'Deepest split — many small actionable tasks; total count still depends on how big the scope is.',
-};
-
-/** @deprecated Use DECOMPOSITION_LEVEL_DESCRIPTIONS; alias for existing imports. */
-export const DECOMPOSITION_LEVEL_RANGES = DECOMPOSITION_LEVEL_DESCRIPTIONS;
-
 export const taskSizeSchema = z.enum(['small', 'medium', 'large']);
 
-export const taskSpecSchema = z.object({
+export const taskSpecSchema: z.ZodType<TaskPayload> = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   size: taskSizeSchema.optional(),
@@ -33,7 +48,7 @@ export const taskSpecSchema = z.object({
   bitrixTaskId: z.number().finite().optional(),
 });
 
-export const epicSpecSchema = z.object({
+export const epicSpecSchema: z.ZodType<EpicPayload> = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   tasks: z.array(taskSpecSchema).min(1),
@@ -43,7 +58,7 @@ export const epicSpecSchema = z.object({
   bitrixParentTaskId: z.number().finite().optional(),
 });
 
-export const planSchema = z.object({
+export const planSchema: z.ZodType<PlanPayload> = z.object({
   project_title: z.string().optional(),
   epic_mode: epicModeSchema,
   /** Relative depth of decomposition; absolute task counts depend on scope (see decomposition_estimate_note). */
@@ -53,10 +68,6 @@ export const planSchema = z.object({
   responsible_id: z.number().optional(),
   epics: z.array(epicSpecSchema).min(1),
 });
-
-export type PlanPayload = z.infer<typeof planSchema>;
-export type EpicPayload = z.infer<typeof epicSpecSchema>;
-export type TaskPayload = z.infer<typeof taskSpecSchema>;
 
 const PLACEHOLDER_TASK_TITLE = 'Clarify scope and next steps';
 
@@ -244,23 +255,6 @@ export function normalizePlanFromAi(planRaw: unknown, prior: PlanPayload | undef
     ),
   );
 }
-
-export const DEFAULT_PLAN: PlanPayload = {
-  epic_mode: 'scrum',
-  epics: [
-    {
-      name: 'Backlog',
-      tasks: [
-        {
-          title: 'First task',
-          description: 'Describe the outcome',
-          syncSelected: true,
-          bitrixSynced: false,
-        },
-      ],
-    },
-  ],
-};
 
 export function parsePlanFromJson(raw: unknown): PlanPayload {
   return planSchema.parse(raw);

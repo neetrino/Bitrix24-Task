@@ -1,4 +1,9 @@
-import { DEFAULT_PLAN, type EpicPayload, type PlanPayload, type TaskPayload } from '@/shared/domain/plan';
+import {
+  DEFAULT_PLAN,
+  type EpicPayload,
+  type PlanPayload,
+  type TaskPayload,
+} from '@/shared/domain/plan-defaults';
 
 export type FlatPlanTaskRow = {
   displayNumber: number;

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { AccessStatus } from '@prisma/client';
-import { auth } from '@/auth';
+import { getSession } from '@/shared/lib/session';
 import { signOutAction } from '@/features/auth/auth-actions';
 import { AppMainConstrained } from '@/shared/ui/AppMainConstrained';
 import {
@@ -13,7 +13,7 @@ import {
 } from '@/shared/ui/workspace-ui';
 
 export default async function PendingAccessPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) {
     redirect('/auth/signin');
   }

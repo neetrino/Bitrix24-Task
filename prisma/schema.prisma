@@ -44,6 +44,7 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Session {
@@ -52,6 +53,8 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model VerificationToken {
@@ -83,6 +86,7 @@ model Project {
   planSnapshots PlanSnapshot[]
 
   @@index([ownerId])
+  @@index([ownerId, updatedAt])
 }
 
 model Phase {
@@ -97,6 +101,7 @@ model Phase {
   planSnapshots PlanSnapshot[]
 
   @@index([projectId])
+  @@index([projectId, sortOrder])
 }
 
 enum MessageRole {
@@ -117,6 +122,7 @@ model Message {
 
   @@index([projectId, createdAt])
   @@index([phaseId])
+  @@index([projectId, phaseId, createdAt])
 }
 
 model PlanSnapshot {
@@ -132,4 +138,5 @@ model PlanSnapshot {
 
   @@index([projectId])
   @@index([phaseId])
+  @@index([projectId, phaseId, updatedAt])
 }

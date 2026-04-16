@@ -1,7 +1,7 @@
 import { ChatModelForm } from '@/features/projects/ChatModelForm';
 import { SETUP_DETAILS_CLASS, SETUP_SUMMARY_CLASS } from '@/features/projects/setup-panel-classes';
 import { PlanEditor } from '@/features/plan-editor/PlanEditor';
-import type { PlanPayload } from '@/shared/domain/plan';
+import type { PlanPayload } from '@/shared/domain/plan-defaults';
 import { WORKSPACE_BODY_CLASS } from '@/shared/ui/workspace-ui';
 
 type ProjectModel = {

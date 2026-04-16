@@ -1,8 +1,8 @@
 'use client';
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
-import type { PlanPayload } from '@/shared/domain/plan';
+import type { PlanPayload } from '@/shared/domain/plan-defaults';
 import { BITRIX_SYNC_CONFIRM_PORTAL_SELECTOR } from '@/features/bitrix-sync/BitrixSyncConfirmDialog';
 import {
   ALL_TASKS_PANEL_DOM_ID,
@@ -14,7 +14,7 @@ import {
   deleteAllTasksPanelQuery,
   setAllTasksPanelQuery,
 } from '@/features/projects/project-plan-tasks-url';
-import { logger } from '@/shared/lib/logger';
+import { clientLogger } from '@/shared/lib/client-logger';
 import { toast } from 'sonner';
 
 function phasesMatch(a: string | null, b: string | null): boolean {
@@ -52,10 +52,22 @@ export function usePlanTasksPanelUrlSync({
   setEditing: Dispatch<SetStateAction<PlanTasksEditingTarget | null>>;
   setPlanLoading: Dispatch<SetStateAction<boolean>>;
 }): { closeModal: () => void; openTasksForPhase: (targetPhaseId: string | null) => void } {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const allTasksParam = searchParams.get(ALL_TASKS_PANEL_QUERY_KEY);
+
+  /**
+   * Update the URL in place without triggering a Next.js navigation. Using
+   * `router.replace` here would cause the underlying RSC page to refetch
+   * (auth + DB work) every time the tasks panel opens or closes, even though
+   * the page's server props (`phase` search param) are unchanged. Shallow
+   * `history.replaceState` preserves shareable/deep-link URLs while keeping
+   * `useSearchParams()` in sync (Next.js subscribes to history changes).
+   */
+  const replaceUrlShallow = useCallback((nextUrl: string) => {
+    if (typeof window === 'undefined') return;
+    window.history.replaceState(window.history.state, '', nextUrl);
+  }, []);
 
   const closeModalInternal = useCallback(() => {
     setModalOpen(false);
@@ -81,8 +93,8 @@ export function usePlanTasksPanelUrlSync({
     closeModalInternal();
     const params = deleteAllTasksPanelQuery(new URLSearchParams(searchParamsString));
     const q = params.toString();
-    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
-  }, [closeModalInternal, pathname, router, searchParamsString]);
+    replaceUrlShallow(q ? `${pathname}?${q}` : pathname);
+  }, [closeModalInternal, pathname, replaceUrlShallow, searchParamsString]);
 
   const loadModalForPhase = useCallback(
     async (targetPhaseId: string | null, signal?: AbortSignal) => {
@@ -125,7 +137,7 @@ export function usePlanTasksPanelUrlSync({
         phasePlanCacheRef.current.set(cacheKey, data.plan);
       } catch (e) {
         if (e instanceof Error && e.name === 'AbortError') return;
-        logger.error({ err: e }, 'project.plan.fetch');
+        clientLogger.error({ err: e }, 'project.plan.fetch');
         const msg = e instanceof Error ? e.message : 'Could not load plan';
         toast.error(msg);
         setFetchError(msg);
@@ -168,9 +180,9 @@ export function usePlanTasksPanelUrlSync({
         return;
       }
       const params = setAllTasksPanelQuery(new URLSearchParams(searchParamsString), targetPhaseId);
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      replaceUrlShallow(`${pathname}?${params.toString()}`);
     },
-    [closeModal, modalOpen, modalPhaseId, pathname, router, searchParamsString],
+    [closeModal, modalOpen, modalPhaseId, pathname, replaceUrlShallow, searchParamsString],
   );
 
   useEffect(() => {

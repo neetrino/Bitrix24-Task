@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
-import { auth } from '@/auth';
+import { getSession } from '@/shared/lib/session';
 import { AiShell } from '@/features/marketing/AiShell';
 import { SiteLogoImage } from '@/shared/ui/site-logo';
 import { WORKSPACE_GHOST_BTN_CLASS } from '@/shared/ui/workspace-ui';
@@ -19,7 +19,7 @@ const ACCOUNT_CHIP_MAX_CLASS = 'w-[min(calc(100vw-1.5rem),calc(260px-2rem))]';
 const ACCOUNT_FLOAT_CLASS = `fixed bottom-24 left-3 z-30 flex ${ACCOUNT_CHIP_MAX_CLASS} items-center gap-2.5 rounded-2xl border border-white/[0.1] bg-workspace-elevated/95 px-3 py-2.5 text-sm font-medium text-neutral-200 shadow-lg backdrop-blur-md transition hover:border-white/20 hover:bg-neutral-800/95 sm:left-4 lg:bottom-6`;
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) {
     redirect('/auth/signin');
   }

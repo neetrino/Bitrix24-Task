@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
@@ -84,7 +84,7 @@ async function postProjectChatRequest(params: {
   }
 }
 
-export function ProjectChatSection({
+function ProjectChatSectionImpl({
   initialMessages,
   projectSlug,
   phaseId,
@@ -122,17 +122,23 @@ export function ProjectChatSection({
     el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [displayMessages, isSending]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const el = messageTextareaRef.current;
     if (!el) return;
-    el.style.height = 'auto';
-    const intrinsic = el.scrollHeight;
-    const nextHeight = Math.min(
-      Math.max(intrinsic + CHAT_INPUT_SCROLL_HEIGHT_BUFFER_PX, CHAT_INPUT_MIN_HEIGHT_PX),
-      CHAT_INPUT_MAX_HEIGHT_PX,
-    );
-    el.style.height = `${nextHeight}px`;
-    el.style.overflowY = el.scrollHeight > el.clientHeight ? 'auto' : 'hidden';
+    // Defer the costly layout read (`scrollHeight`) to the next animation
+    // frame so long drafts don't stall keystroke handling. `useLayoutEffect`
+    // would force a synchronous measure on every keypress.
+    const raf = requestAnimationFrame(() => {
+      el.style.height = 'auto';
+      const intrinsic = el.scrollHeight;
+      const nextHeight = Math.min(
+        Math.max(intrinsic + CHAT_INPUT_SCROLL_HEIGHT_BUFFER_PX, CHAT_INPUT_MIN_HEIGHT_PX),
+        CHAT_INPUT_MAX_HEIGHT_PX,
+      );
+      el.style.height = `${nextHeight}px`;
+      el.style.overflowY = el.scrollHeight > el.clientHeight ? 'auto' : 'hidden';
+    });
+    return () => cancelAnimationFrame(raf);
   }, [draft]);
 
   const handleStop = () => {
@@ -269,3 +275,9 @@ export function ProjectChatSection({
     </form>
   );
 }
+
+/**
+ * Memoized export so unrelated state changes in the host component
+ * (tasks panel, modal, plan editing) don't force the chat tree to re-render.
+ */
+export const ProjectChatSection = memo(ProjectChatSectionImpl);

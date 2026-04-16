@@ -47,6 +47,7 @@ export async function POST(
 
   const project = await prisma.project.findFirst({
     where: { slug, ownerId: userId },
+    select: { id: true, slug: true, openaiChatModel: true },
   });
   if (!project) {
     return Response.json({ error: 'Not found' }, { status: 404 });
@@ -60,6 +61,7 @@ export async function POST(
     phaseId,
     message: composed,
     signal: req.signal,
+    project,
   });
 
   if (result && 'cancelled' in result) {

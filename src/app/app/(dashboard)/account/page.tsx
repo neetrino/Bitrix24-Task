@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { auth } from '@/auth';
 import { AccountContextPicker } from '@/features/account/AccountContextPicker';
 import { AccountSettingsBlocks } from '@/features/account/AccountSettingsBlocks';
 import { accountSettingsPath } from '@/features/account/account-settings-path';
@@ -8,7 +7,7 @@ import { signOutAction } from '@/features/auth/auth-actions';
 import { listProjectsWithPhasesForAccount } from '@/features/projects/project-queries';
 import { DEFAULT_PLAN, parsePlanFromJson, type PlanPayload } from '@/shared/domain/plan';
 import { prisma } from '@/shared/lib/prisma';
-import { requireActiveUserId } from '@/shared/lib/session';
+import { getSession, requireActiveUserId } from '@/shared/lib/session';
 import { AppMainConstrained } from '@/shared/ui/AppMainConstrained';
 import {
   WORKSPACE_ACCENT_BTN_CLASS,
@@ -32,7 +31,7 @@ export default async function AccountPage({
   searchParams: Promise<{ project?: string; phase?: string }>;
 }) {
   const userId = await requireActiveUserId();
-  const session = await auth();
+  const session = await getSession();
   const sp = await searchParams;
   const projects = await listProjectsWithPhasesForAccount(userId);
 

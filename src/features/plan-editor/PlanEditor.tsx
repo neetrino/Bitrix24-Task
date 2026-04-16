@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { toast } from 'sonner';
-import type { PlanPayload } from '@/shared/domain/plan';
+import type { PlanPayload } from '@/shared/domain/plan-defaults';
 import { savePlanSnapshot } from '@/features/plan-editor/plan-actions';
 import {
   WORKSPACE_BODY_CLASS,

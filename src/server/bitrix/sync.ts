@@ -30,7 +30,7 @@ export async function syncScrum(
 
     if (entries.length === 0) {
       if (dryRun) {
-        logger.info({ epic: epic.name }, '[dry-run] epic — no tasks selected for sync');
+        logger.debug({ epic: epic.name }, '[dry-run] epic — no tasks selected for sync');
       }
       continue;
     }
@@ -38,7 +38,7 @@ export async function syncScrum(
     let epicId = epic.bitrixEpicId;
 
     if (dryRun) {
-      logger.info(
+      logger.debug(
         {
           epic: epic.name,
           taskTitles: entries.map((e) => e.task.title),
@@ -53,7 +53,7 @@ export async function syncScrum(
       const epicResult = await addEpic(webhook, groupId, epic.name, epic.description ?? '');
       epicId = epicResult.id;
       result.epics[ei].bitrixEpicId = epicId;
-      logger.info({ epicId, name: epic.name }, 'Epic created');
+      logger.debug({ epicId, name: epic.name }, 'Epic created');
     }
 
     for (const { task, ti } of entries) {
@@ -64,7 +64,7 @@ export async function syncScrum(
         });
         result.epics[ei].tasks[ti].bitrixSynced = true;
         result.epics[ei].tasks[ti].syncSelected = false;
-        logger.info({ taskId: task.bitrixTaskId, title: task.title, epicId }, 'Task updated');
+        logger.debug({ taskId: task.bitrixTaskId, title: task.title, epicId }, 'Task updated');
         continue;
       }
 
@@ -80,7 +80,7 @@ export async function syncScrum(
       result.epics[ei].tasks[ti].bitrixTaskId = newTaskId;
       result.epics[ei].tasks[ti].bitrixSynced = true;
       result.epics[ei].tasks[ti].syncSelected = false;
-      logger.info({ taskId: newTaskId, title: task.title, epicId }, 'Task created');
+      logger.debug({ taskId: newTaskId, title: task.title, epicId }, 'Task created');
     }
   }
 
@@ -105,7 +105,7 @@ export async function syncParentTasks(
 
     if (entries.length === 0) {
       if (dryRun) {
-        logger.info({ parent: epic.name }, '[dry-run] parent — no subtasks selected for sync');
+        logger.debug({ parent: epic.name }, '[dry-run] parent — no subtasks selected for sync');
       }
       continue;
     }
@@ -113,7 +113,7 @@ export async function syncParentTasks(
     let parentId = epic.bitrixParentTaskId;
 
     if (dryRun) {
-      logger.info(
+      logger.debug(
         {
           parent: epic.name,
           subtasks: entries.map((e) => e.task.title),
@@ -134,7 +134,7 @@ export async function syncParentTasks(
       });
       parentId = Number(parent.task.id);
       result.epics[ei].bitrixParentTaskId = parentId;
-      logger.info({ parentId, name: epic.name }, 'Parent task created');
+      logger.debug({ parentId, name: epic.name }, 'Parent task created');
     }
 
     for (const { task, ti } of entries) {
@@ -145,7 +145,7 @@ export async function syncParentTasks(
         });
         result.epics[ei].tasks[ti].bitrixSynced = true;
         result.epics[ei].tasks[ti].syncSelected = false;
-        logger.info({ taskId: task.bitrixTaskId, title: task.title }, 'Subtask updated');
+        logger.debug({ taskId: task.bitrixTaskId, title: task.title }, 'Subtask updated');
         continue;
       }
 
@@ -161,7 +161,7 @@ export async function syncParentTasks(
       result.epics[ei].tasks[ti].bitrixTaskId = newId;
       result.epics[ei].tasks[ti].bitrixSynced = true;
       result.epics[ei].tasks[ti].syncSelected = false;
-      logger.info({ taskId: newId, title: task.title }, 'Subtask created');
+      logger.debug({ taskId: newId, title: task.title }, 'Subtask created');
     }
   }
 

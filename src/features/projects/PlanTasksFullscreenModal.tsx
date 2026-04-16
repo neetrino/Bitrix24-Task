@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useMemo, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import type { PlanPayload } from '@/shared/domain/plan';
+import type { PlanPayload } from '@/shared/domain/plan-defaults';
 import {
   buildFlatPlanTasks,
   filterFlatPlanTasks,

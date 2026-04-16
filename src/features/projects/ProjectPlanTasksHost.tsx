@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from 'react';
-import type { PlanPayload } from '@/shared/domain/plan';
+import type { PlanPayload } from '@/shared/domain/plan-defaults';
 import { savePlanSnapshot } from '@/features/plan-editor/plan-actions';
 import { setPlanTaskSyncSelected } from '@/features/bitrix-sync/plan-sync-actions';
 import {
@@ -17,7 +17,7 @@ import {
   type PlanTasksEditingTarget,
   usePlanTasksPanelUrlSync,
 } from '@/features/projects/use-plan-tasks-panel-url-sync';
-import { logger } from '@/shared/lib/logger';
+import { clientLogger } from '@/shared/lib/client-logger';
 import { toast } from 'sonner';
 
 async function setPlanTaskSyncSelectedSafe(
@@ -30,7 +30,7 @@ async function setPlanTaskSyncSelectedSafe(
   try {
     return await setPlanTaskSyncSelected(projectId, phaseId, epicIndex, taskIndex, syncSelected);
   } catch (e) {
-    logger.error({ err: e, projectId }, 'setPlanTaskSyncSelected failed');
+    clientLogger.error({ err: e, projectId }, 'setPlanTaskSyncSelected failed');
     return { error: e instanceof Error ? e.message : 'Request failed' };
   }
 }
