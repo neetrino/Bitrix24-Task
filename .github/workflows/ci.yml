@@ -10,17 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '22'
-          cache: 'pnpm'
-      # Avoid pnpm/action-setup@v6 + pnpm 9: the v6 bootstrap can invoke pnpm 11 paths and
-      # break lockfile parsing ("expected a single document…"). Corepack runs the exact
-      # pnpm from package.json "packageManager".
+      # Corepack must run BEFORE setup-node so that `cache: 'pnpm'` can resolve
+      # `pnpm store path`. Avoid pnpm/action-setup@v6 + pnpm 9: the v6 bootstrap
+      # can invoke pnpm 11 paths and break lockfile parsing ("expected a single
+      # document…"). Corepack runs the exact pnpm from package.json
+      # "packageManager".
       - name: Enable Corepack (pnpm from packageManager)
         run: |
           corepack enable
           corepack prepare "$(node -p "require('./package.json').packageManager")" --activate
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'pnpm'
       - name: Validate pnpm-lock.yaml (single YAML document, no merge junk)
         run: |
           set -euo pipefail
