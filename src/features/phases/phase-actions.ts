@@ -50,6 +50,38 @@ export async function createPhase(
   return { success: true, phaseId: phase.id };
 }
 
+export type UpdatePhaseLabelState = { error: string } | { success: true };
+
+export async function updatePhaseLabel(
+  projectId: string,
+  phaseId: string,
+  label: string,
+): Promise<UpdatePhaseLabelState> {
+  const userId = await requireActiveUserId();
+  const trimmed = typeof label === 'string' ? label.trim() : '';
+  const parsed = labelSchema.safeParse(trimmed);
+  if (!parsed.success) {
+    return { error: 'Label must be 1–200 characters' };
+  }
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, ownerId: userId },
+    select: { slug: true },
+  });
+  if (!project) {
+    return { error: 'Project not found' };
+  }
+  const result = await prisma.phase.updateMany({
+    where: { id: phaseId, projectId },
+    data: { label: trimmed },
+  });
+  if (result.count === 0) {
+    return { error: 'Phase not found' };
+  }
+  revalidatePath(`/app/projects/${project.slug}`);
+  revalidateProjectData(projectId);
+  return { success: true };
+}
+
 /**
  * Marks a phase (or Main when `phaseId` is null) as recently used so the sidebar order updates.
  */

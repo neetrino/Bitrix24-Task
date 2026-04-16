@@ -1,10 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { touchPhaseActivity } from '@/features/phases/phase-actions';
+import { useRouter, useSearchParams } from 'next/navigation';
+import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
+import { toast } from 'sonner';
+import { touchPhaseActivity, updatePhaseLabel } from '@/features/phases/phase-actions';
 import type { PhaseRailEntry } from '@/features/phases/phase-rail-order';
 import { PhaseCreateSidebarRow } from '@/features/phases/PhaseCreateSidebarRow';
+import { PhaseRowMoreMenu } from '@/features/phases/PhaseRowMoreMenu';
 import { TASK_LIST_TOGGLE_DATA_KEY } from '@/features/projects/plan-tasks-layout';
 import { ALL_TASKS_PANEL_QUERY_KEY, buildProjectPageHref } from '@/features/projects/project-plan-tasks-url';
 import { useProjectPlanTasks } from '@/features/projects/project-plan-tasks-context';
@@ -19,6 +23,10 @@ const PHASE_ROW_WRAP_IDLE =
 
 const LINK_ACTIVE = 'font-medium text-neutral-100';
 const LINK_IDLE = 'font-medium text-neutral-400 hover:text-neutral-200';
+
+/** Inline rename: dark bar, native text selection (blue highlight) on focus */
+const PHASE_LABEL_INPUT_CLASS =
+  'min-w-0 flex-1 rounded-lg border border-white/[0.12] bg-neutral-800/95 px-2 py-0.5 text-left text-sm font-medium leading-snug text-neutral-100 shadow-none outline-none ring-1 ring-blue-500/35 focus:border-white/[0.18] focus:ring-blue-500/50';
 
 function tasksButtonClass(isTasksPanelOpen: boolean): string {
   const base =
@@ -39,6 +47,8 @@ function PhaseChatRow({
   onOpenTasks,
   tasksAriaLabel,
   tasksTitle,
+  phaseMenu,
+  labelEdit,
 }: {
   isActive: boolean;
   isTasksPanelOpen: boolean;
@@ -49,17 +59,71 @@ function PhaseChatRow({
   onOpenTasks: () => void;
   tasksAriaLabel: string;
   tasksTitle: string;
+  phaseMenu?: ReactNode;
+  labelEdit?: {
+    isEditing: boolean;
+    draft: string;
+    onDraftChange: (v: string) => void;
+    onCommit: (value: string) => void;
+    onCancel: () => void;
+  };
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const skipBlurCommitRef = useRef(false);
+
+  useEffect(() => {
+    if (!labelEdit?.isEditing) return;
+    const el = inputRef.current;
+    if (!el) return;
+    el.focus();
+    el.select();
+  }, [labelEdit?.isEditing]);
+
+  const wrap = `${isActive ? PHASE_ROW_WRAP_ACTIVE : PHASE_ROW_WRAP_IDLE} group`;
   return (
-    <div className={isActive ? PHASE_ROW_WRAP_ACTIVE : PHASE_ROW_WRAP_IDLE}>
+    <div className={wrap}>
       <div className="flex min-w-0 items-center gap-2">
-        <Link
-          className={`min-w-0 flex-1 truncate rounded-lg px-1 py-0.5 text-left text-sm leading-snug transition ${isActive ? LINK_ACTIVE : LINK_IDLE}`}
-          href={href}
-          onClick={() => onPhaseNavigate?.()}
-        >
-          {label}
-        </Link>
+        {labelEdit?.isEditing ? (
+          <input
+            aria-label="Phase name"
+            autoComplete="off"
+            className={PHASE_LABEL_INPUT_CLASS}
+            maxLength={200}
+            onBlur={() => {
+              if (skipBlurCommitRef.current) {
+                skipBlurCommitRef.current = false;
+                return;
+              }
+              const el = inputRef.current;
+              if (!el) return;
+              labelEdit.onCommit(el.value);
+            }}
+            onChange={(e) => labelEdit.onDraftChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                (e.target as HTMLInputElement).blur();
+              }
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                skipBlurCommitRef.current = true;
+                labelEdit.onCancel();
+              }
+            }}
+            ref={inputRef}
+            type="text"
+            value={labelEdit.draft}
+          />
+        ) : (
+          <Link
+            className={`min-w-0 flex-1 truncate rounded-lg px-1 py-0.5 text-left text-sm leading-snug transition ${isActive ? LINK_ACTIVE : LINK_IDLE}`}
+            href={href}
+            onClick={() => onPhaseNavigate?.()}
+          >
+            {label}
+          </Link>
+        )}
+        {phaseMenu}
         <button
           aria-label={tasksAriaLabel}
           aria-pressed={isTasksPanelOpen}
@@ -95,10 +159,39 @@ export function PhaseSidebarNav({
   activePhaseId: string | null;
   taskCounts: { main: number; byPhaseId: Record<string, number> };
 }) {
+  const router = useRouter();
   const { openTasksForPhase, openTasksPhaseId } = useProjectPlanTasks();
   const searchParams = useSearchParams();
   const preservedAllTasks = searchParams.get(ALL_TASKS_PANEL_QUERY_KEY);
   const isTasksPanelOpenForMain = openTasksPhaseId === null;
+
+  const [editingPhaseId, setEditingPhaseId] = useState<string | null>(null);
+  const [draftLabel, setDraftLabel] = useState('');
+  const [, startTransition] = useTransition();
+
+  function commitRename(phaseId: string, originalLabel: string, value: string) {
+    const trimmed = value.trim();
+    if (trimmed === originalLabel) {
+      setEditingPhaseId(null);
+      return;
+    }
+    setEditingPhaseId(null);
+    startTransition(async () => {
+      const result = await updatePhaseLabel(projectId, phaseId, trimmed);
+      if ('error' in result) {
+        toast.error(result.error);
+        setEditingPhaseId(phaseId);
+        setDraftLabel(trimmed);
+        return;
+      }
+      toast.success('Phase renamed.');
+      router.refresh();
+    });
+  }
+
+  function cancelRename() {
+    setEditingPhaseId(null);
+  }
 
   return (
     <nav aria-label="Phases" className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 py-3">
@@ -127,6 +220,7 @@ export function PhaseSidebarNav({
               );
             }
             const p = entry.phase;
+            const isEditingThis = editingPhaseId === p.id;
             return (
               <PhaseChatRow
                 href={buildProjectPageHref(projectSlug, { phaseId: p.id, allTasks: preservedAllTasks })}
@@ -134,10 +228,30 @@ export function PhaseSidebarNav({
                 isTasksPanelOpen={openTasksPhaseId === p.id}
                 key={p.id}
                 label={p.label}
+                labelEdit={
+                  isEditingThis
+                    ? {
+                        isEditing: true,
+                        draft: draftLabel,
+                        onDraftChange: setDraftLabel,
+                        onCancel: cancelRename,
+                        onCommit: (v) => commitRename(p.id, p.label, v),
+                      }
+                    : undefined
+                }
                 onOpenTasks={() => openTasksForPhase(p.id)}
                 onPhaseNavigate={() => {
                   void touchPhaseActivity(projectId, p.id);
                 }}
+                phaseMenu={
+                  <PhaseRowMoreMenu
+                    isRowEditing={isEditingThis}
+                    onRename={() => {
+                      setDraftLabel(p.label);
+                      setEditingPhaseId(p.id);
+                    }}
+                  />
+                }
                 taskCount={taskCounts.byPhaseId[p.id] ?? 0}
                 tasksAriaLabel={`Tasks for ${p.label}, ${taskCounts.byPhaseId[p.id] ?? 0} tasks`}
                 tasksTitle={`Open task list for ${p.label}`}
