@@ -21,6 +21,25 @@ jobs:
         run: |
           corepack enable
           corepack prepare "$(node -p "require('./package.json').packageManager")" --activate
+      - name: Validate pnpm-lock.yaml (single YAML document, no merge junk)
+        run: |
+          set -euo pipefail
+          if ! grep -q '^lockfileVersion:' pnpm-lock.yaml; then
+            echo 'pnpm-lock.yaml: missing lockfileVersion'
+            exit 1
+          fi
+          if [ "$(grep -c '^lockfileVersion:' pnpm-lock.yaml)" -ne 1 ]; then
+            echo 'pnpm-lock.yaml: expected exactly one lockfileVersion (merge conflict or duplicated lockfile?)'
+            exit 1
+          fi
+          if grep -nE '^(<<<<<<<|=======|>>>>>>>)' pnpm-lock.yaml; then
+            echo 'pnpm-lock.yaml: unresolved git merge conflict markers'
+            exit 1
+          fi
+          if grep -q '^---$' pnpm-lock.yaml; then
+            echo 'pnpm-lock.yaml: line "---" starts a second YAML document; keep a single lockfile'
+            exit 1
+          fi
       - run: pnpm install --frozen-lockfile
       - run: pnpm audit --audit-level=high
       - run: pnpm run lint
