@@ -8,8 +8,8 @@ import {
   WorkspaceProjectListRow,
   type ProjectListRow,
 } from '@/features/projects/WorkspaceProjectListRow';
-import { MagnifyingGlassGlyph, SparklesGlyph } from '@/shared/ui/brand-icons';
-import { WORKSPACE_FIELD_CLASS, WORKSPACE_PANEL_CLASS } from '@/shared/ui/workspace-ui';
+import { MagnifyingGlassGlyph } from '@/shared/ui/brand-icons';
+import { WORKSPACE_PANEL_CLASS } from '@/shared/ui/workspace-ui';
 
 export type { ProjectListRow };
 
@@ -25,14 +25,25 @@ const PROJECTS_SEARCH_FIELD_WRAP_CLASS = 'relative min-w-0';
  * `7fr` / `3fr` keeps the ratio without magic percentages in multiple places.
  */
 const PROJECTS_TOOLBAR_CLASS =
-  'mt-4 grid w-full grid-cols-1 gap-3 rounded-xl border border-white/[0.08] bg-workspace-canvas p-3 sm:grid-cols-[minmax(0,7fr)_minmax(0,3fr)] sm:items-center sm:gap-3 sm:p-3.5';
+  'grid w-full grid-cols-1 gap-2 sm:grid-cols-[minmax(0,7fr)_minmax(0,3fr)] sm:items-center sm:gap-2.5';
+
+/** One soft “floating” shell: no border, depth from stacked shadows + top highlight (subtle 3D). */
+const PROJECTS_TOOLBAR_FLOAT_SHELL_CLASS =
+  'rounded-2xl border-0 bg-neutral-800/55 p-2.5 shadow-[0_14px_44px_-18px_rgba(0,0,0,0.72),0_6px_20px_-12px_rgba(0,0,0,0.45),inset_0_1px_0_0_rgba(255,255,255,0.09)] backdrop-blur-md sm:p-3';
+
+/** Inputs inside the shell: no box border — they sit on the shared lift. */
+const PROJECTS_TOOLBAR_INPUT_INNER_CLASS =
+  'w-full rounded-xl border-0 bg-transparent py-2.5 pl-10 pr-3 text-sm text-neutral-100 placeholder:text-neutral-500 shadow-none outline-none ring-0 transition focus:bg-white/[0.04] focus:ring-2 focus:ring-violet-500/35';
+
+const PROJECTS_TOOLBAR_NAME_INNER_CLASS =
+  'min-w-0 flex-1 rounded-xl border-0 bg-transparent px-3 py-2.5 text-sm text-neutral-100 placeholder:text-neutral-500 shadow-none outline-none ring-0 transition focus:bg-white/[0.04] focus:ring-2 focus:ring-violet-500/35';
 
 /** Tighter create row: slightly smaller gaps and button padding. */
-const PROJECTS_CREATE_FORM_CLASS = 'flex min-w-0 flex-row items-center gap-1.5';
+const PROJECTS_CREATE_FORM_CLASS = 'flex min-w-0 flex-row items-center gap-2';
 
-/** Accent CTA with narrower horizontal padding than WORKSPACE_ACCENT_BTN_CLASS for this toolbar. */
+/** Primary action: same “lift” family, violet volume + soft specular inset. */
 const PROJECTS_CREATE_BTN_CLASS =
-  'rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-violet-500 disabled:pointer-events-none disabled:opacity-60 sm:px-3.5';
+  'shrink-0 rounded-xl border-0 bg-gradient-to-b from-violet-500 to-violet-700 px-4 py-2.5 text-sm font-medium text-white shadow-[0_8px_24px_-10px_rgba(91,33,182,0.55),0_4px_12px_-6px_rgba(0,0,0,0.4),inset_0_1px_0_0_rgba(255,255,255,0.2)] outline-none transition hover:from-violet-400 hover:to-violet-600 hover:shadow-[0_10px_28px_-10px_rgba(91,33,182,0.5),inset_0_1px_0_0_rgba(255,255,255,0.22)] focus-visible:ring-2 focus-visible:ring-violet-400/50 disabled:pointer-events-none disabled:opacity-60 sm:px-4';
 
 function buildDisplayRows(
   serverProjects: ProjectListRow[],
@@ -119,55 +130,51 @@ export function WorkspaceProjectsSection({ initialProjects }: { initialProjects:
     <>
       <div className={`overflow-hidden ${WORKSPACE_PANEL_CLASS}`}>
         <div className="border-b border-workspace-hairline bg-workspace-canvas px-5 py-4">
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-neutral-300">
-            <SparklesGlyph className="h-4 w-4 text-neutral-400" />
-            All projects
-          </div>
-          <p className="mt-1 text-sm text-neutral-500">Open a project to continue planning.</p>
+          <div className={PROJECTS_TOOLBAR_FLOAT_SHELL_CLASS}>
+            <div className={PROJECTS_TOOLBAR_CLASS}>
+              <div className={PROJECTS_SEARCH_FIELD_WRAP_CLASS}>
+                <MagnifyingGlassGlyph className="pointer-events-none absolute left-3 top-1/2 z-[1] h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                <label className="sr-only" htmlFor="workspace-project-search">
+                  Search projects
+                </label>
+                <input
+                  autoComplete="off"
+                  className={PROJECTS_TOOLBAR_INPUT_INNER_CLASS}
+                  id="workspace-project-search"
+                  onChange={(e) => setProjectSearch(e.target.value)}
+                  placeholder="Search…"
+                  type="search"
+                  value={projectSearch}
+                />
+              </div>
 
-          <div className={PROJECTS_TOOLBAR_CLASS}>
-            <div className={PROJECTS_SEARCH_FIELD_WRAP_CLASS}>
-              <MagnifyingGlassGlyph className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
-              <label className="sr-only" htmlFor="workspace-project-search">
-                Search projects
-              </label>
-              <input
-                autoComplete="off"
-                className={`w-full pl-10 pr-3 ${WORKSPACE_FIELD_CLASS}`}
-                id="workspace-project-search"
-                onChange={(e) => setProjectSearch(e.target.value)}
-                placeholder="Search…"
-                type="search"
-                value={projectSearch}
-              />
-            </div>
-
-            <form
-              ref={formRef}
-              className={PROJECTS_CREATE_FORM_CLASS}
-              onSubmit={handleSubmit}
-            >
-              <label className="sr-only" htmlFor="name">
-                New project
-              </label>
-              <input
-                className={`min-w-0 flex-1 ${WORKSPACE_FIELD_CLASS}`}
-                disabled={isPending}
-                id="name"
-                name="name"
-                placeholder="Name…"
-                required
-                type="text"
-              />
-              <button
-                aria-busy={isPending}
-                className={`shrink-0 ${PROJECTS_CREATE_BTN_CLASS} disabled:pointer-events-none disabled:opacity-60`}
-                disabled={isPending}
-                type="submit"
+              <form
+                ref={formRef}
+                className={PROJECTS_CREATE_FORM_CLASS}
+                onSubmit={handleSubmit}
               >
-                {isPending ? 'Creating…' : 'Create'}
-              </button>
-            </form>
+                <label className="sr-only" htmlFor="name">
+                  New project
+                </label>
+                <input
+                  className={PROJECTS_TOOLBAR_NAME_INNER_CLASS}
+                  disabled={isPending}
+                  id="name"
+                  name="name"
+                  placeholder="Name…"
+                  required
+                  type="text"
+                />
+                <button
+                  aria-busy={isPending}
+                  className={PROJECTS_CREATE_BTN_CLASS}
+                  disabled={isPending}
+                  type="submit"
+                >
+                  {isPending ? 'Creating…' : 'Create'}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
         <ul className="divide-y divide-white/[0.06]">
