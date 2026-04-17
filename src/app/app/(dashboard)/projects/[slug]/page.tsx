@@ -74,6 +74,7 @@ export default async function ProjectPage({
     id: m.id,
     role: m.role,
     content: m.content,
+    attachments: m.attachments,
   }));
 
   const taskCounts = await getCachedPhaseTaskCounts(project.id, phases);

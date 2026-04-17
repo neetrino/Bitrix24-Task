@@ -27,6 +27,12 @@ async function fetchLatestPhaseMessages(projectId: string, phaseId: string | nul
     where: { projectId, phaseId },
     orderBy: { createdAt: 'desc' },
     take: CHAT_UI_MESSAGE_LIMIT,
+    include: {
+      attachments: {
+        select: { id: true, filename: true, format: true, sizeBytes: true },
+        orderBy: { createdAt: 'asc' },
+      },
+    },
   });
   return rows.reverse();
 }

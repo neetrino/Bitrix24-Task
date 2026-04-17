@@ -14,6 +14,11 @@ import {
   precheckFile,
   uploadAttachment,
 } from '@/features/chat/attachment-uploads';
+import { extractDisplayContent } from '@/features/chat/message-display';
+import {
+  type MessageAttachmentMeta,
+  MessageAttachmentChip,
+} from '@/features/chat/MessageAttachmentChip';
 import {
   AssistantPendingRow,
   SendOrStopControl,
@@ -24,6 +29,7 @@ export type ChatMessageLine = {
   id: string;
   role: string;
   content: string;
+  attachments?: MessageAttachmentMeta[];
 };
 
 const CHAT_CONTENT_MAX = 'max-w-3xl';
@@ -274,11 +280,14 @@ function ProjectChatSectionImpl({
     enqueueFiles(event.dataTransfer.files);
   };
 
-  useEffect(() => {
+  // Snap (no smooth) immediately after layout so the chat doesn't bounce
+  // when the optimistic user bubble, the pending row and the server-refreshed
+  // assistant message arrive in quick succession during a single turn.
+  useLayoutEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-  }, [displayMessages, isSending]);
+    el.scrollTop = el.scrollHeight;
+  }, [displayMessages.length, isSending]);
 
   useEffect(() => {
     const el = messageTextareaRef.current;
@@ -325,8 +334,21 @@ function ProjectChatSectionImpl({
     setDraft('');
     const sentAttachments = [...attachments];
     setAttachments([]);
+    const optimisticAttachments: MessageAttachmentMeta[] = sentAttachments
+      .filter((a) => a.status === 'ready' && a.serverId)
+      .map((a) => ({
+        id: a.serverId as string,
+        filename: a.filename,
+        format: a.format,
+        sizeBytes: a.sizeBytes,
+      }));
     setPendingUserLines([
-      { id: makeLocalId(), role: 'user', content: message },
+      {
+        id: makeLocalId(),
+        role: 'user',
+        content: message,
+        attachments: optimisticAttachments,
+      },
     ]);
 
     const url = `/api/projects/${encodeURIComponent(projectSlug)}/chat`;
@@ -374,19 +396,37 @@ function ProjectChatSectionImpl({
         ) : (
           <div className={`mx-auto w-full ${CHAT_CONTENT_MAX} px-5 pb-44 pt-2`}>
             <div className="space-y-10">
-              {displayMessages.map((m) =>
-                m.role === 'user' ? (
-                  <div className="flex justify-end" key={m.id}>
-                    <div className="max-w-[min(100%,85%)] rounded-3xl bg-[#323232] px-5 py-2.5 text-[15px] leading-relaxed text-neutral-50">
+              {displayMessages.map((m) => {
+                if (m.role !== 'user') {
+                  return (
+                    <div className="text-[15px] leading-relaxed text-neutral-50" key={m.id}>
                       <span className="whitespace-pre-wrap">{m.content}</span>
                     </div>
+                  );
+                }
+                const displayText = extractDisplayContent(m.content);
+                const messageAttachments = m.attachments ?? [];
+                return (
+                  <div className="flex flex-col items-end gap-1.5" key={m.id}>
+                    {messageAttachments.length > 0 ? (
+                      <div className="flex max-w-[min(100%,85%)] flex-wrap justify-end gap-1.5">
+                        {messageAttachments.map((a) => (
+                          <MessageAttachmentChip
+                            attachment={a}
+                            key={a.id}
+                            projectSlug={projectSlug}
+                          />
+                        ))}
+                      </div>
+                    ) : null}
+                    {displayText.length > 0 ? (
+                      <div className="max-w-[min(100%,85%)] rounded-3xl bg-[#323232] px-5 py-2.5 text-[15px] leading-relaxed text-neutral-50">
+                        <span className="whitespace-pre-wrap">{displayText}</span>
+                      </div>
+                    ) : null}
                   </div>
-                ) : (
-                  <div className="text-[15px] leading-relaxed text-neutral-50" key={m.id}>
-                    <span className="whitespace-pre-wrap">{m.content}</span>
-                  </div>
-                ),
-              )}
+                );
+              })}
               <AssistantPendingRow pending={isSending} />
             </div>
           </div>
