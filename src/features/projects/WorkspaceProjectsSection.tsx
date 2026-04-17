@@ -25,10 +25,13 @@ const PROJECTS_SEARCH_FIELD_WRAP_CLASS = 'relative min-w-0';
  * `7fr` / `3fr` keeps the ratio without magic percentages in multiple places.
  */
 const PROJECTS_TOOLBAR_CLASS =
-  'grid w-full grid-cols-1 gap-2 sm:grid-cols-[minmax(0,7fr)_minmax(0,3fr)] sm:items-center sm:gap-2.5';
+  'grid w-full grid-cols-1 gap-3 sm:grid-cols-[minmax(0,7fr)_minmax(0,3fr)] sm:items-center sm:gap-4';
 
-/** One soft “floating” shell: no border, depth from stacked shadows + top highlight (subtle 3D). */
-const PROJECTS_TOOLBAR_FLOAT_SHELL_CLASS =
+/**
+ * Soft “floating” island — reused twice (search / create) so they read as two separate 3D chips,
+ * same depth treatment as the previous single bar.
+ */
+const PROJECTS_FLOAT_3D_ISLAND_CLASS =
   'rounded-2xl border-0 bg-neutral-800/55 p-2.5 shadow-[0_14px_44px_-18px_rgba(0,0,0,0.72),0_6px_20px_-12px_rgba(0,0,0,0.45),inset_0_1px_0_0_rgba(255,255,255,0.09)] backdrop-blur-md sm:p-3';
 
 /** Inputs inside the shell: no box border — they sit on the shared lift. */
@@ -130,8 +133,8 @@ export function WorkspaceProjectsSection({ initialProjects }: { initialProjects:
     <>
       <div className={`overflow-hidden ${WORKSPACE_PANEL_CLASS}`}>
         <div className="border-b border-workspace-hairline bg-workspace-canvas px-5 py-4">
-          <div className={PROJECTS_TOOLBAR_FLOAT_SHELL_CLASS}>
-            <div className={PROJECTS_TOOLBAR_CLASS}>
+          <div className={PROJECTS_TOOLBAR_CLASS}>
+            <div className={`${PROJECTS_FLOAT_3D_ISLAND_CLASS} min-w-0`}>
               <div className={PROJECTS_SEARCH_FIELD_WRAP_CLASS}>
                 <MagnifyingGlassGlyph className="pointer-events-none absolute left-3 top-1/2 z-[1] h-4 w-4 -translate-y-1/2 text-neutral-400" />
                 <label className="sr-only" htmlFor="workspace-project-search">
@@ -147,34 +150,34 @@ export function WorkspaceProjectsSection({ initialProjects }: { initialProjects:
                   value={projectSearch}
                 />
               </div>
-
-              <form
-                ref={formRef}
-                className={PROJECTS_CREATE_FORM_CLASS}
-                onSubmit={handleSubmit}
-              >
-                <label className="sr-only" htmlFor="name">
-                  New project
-                </label>
-                <input
-                  className={PROJECTS_TOOLBAR_NAME_INNER_CLASS}
-                  disabled={isPending}
-                  id="name"
-                  name="name"
-                  placeholder="Name…"
-                  required
-                  type="text"
-                />
-                <button
-                  aria-busy={isPending}
-                  className={PROJECTS_CREATE_BTN_CLASS}
-                  disabled={isPending}
-                  type="submit"
-                >
-                  {isPending ? 'Creating…' : 'Create'}
-                </button>
-              </form>
             </div>
+
+            <form
+              ref={formRef}
+              className={`${PROJECTS_FLOAT_3D_ISLAND_CLASS} ${PROJECTS_CREATE_FORM_CLASS} min-w-0`}
+              onSubmit={handleSubmit}
+            >
+              <label className="sr-only" htmlFor="name">
+                New project
+              </label>
+              <input
+                className={PROJECTS_TOOLBAR_NAME_INNER_CLASS}
+                disabled={isPending}
+                id="name"
+                name="name"
+                placeholder="Name…"
+                required
+                type="text"
+              />
+              <button
+                aria-busy={isPending}
+                className={PROJECTS_CREATE_BTN_CLASS}
+                disabled={isPending}
+                type="submit"
+              >
+                {isPending ? 'Creating…' : 'Create'}
+              </button>
+            </form>
           </div>
         </div>
         <ul className="divide-y divide-white/[0.06]">
