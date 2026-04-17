@@ -9,18 +9,30 @@ import {
   type ProjectListRow,
 } from '@/features/projects/WorkspaceProjectListRow';
 import { MagnifyingGlassGlyph, SparklesGlyph } from '@/shared/ui/brand-icons';
-import {
-  WORKSPACE_ACCENT_BTN_CLASS,
-  WORKSPACE_FIELD_CLASS,
-  WORKSPACE_LABEL_CLASS,
-  WORKSPACE_PANEL_CLASS,
-} from '@/shared/ui/workspace-ui';
+import { WORKSPACE_FIELD_CLASS, WORKSPACE_PANEL_CLASS } from '@/shared/ui/workspace-ui';
 
 export type { ProjectListRow };
 
 type DisplayRow = ProjectListRow & { pending?: boolean };
 
 const PENDING_ROW_ID = 'pending-create';
+
+/** Search column (~70% width on desktop). */
+const PROJECTS_SEARCH_FIELD_WRAP_CLASS = 'relative min-w-0';
+
+/**
+ * Single toolbar: search ~70% + create ~30% on one strip (stacks on narrow viewports).
+ * `7fr` / `3fr` keeps the ratio without magic percentages in multiple places.
+ */
+const PROJECTS_TOOLBAR_CLASS =
+  'mt-4 grid w-full grid-cols-1 gap-3 rounded-xl border border-white/[0.08] bg-workspace-canvas p-3 sm:grid-cols-[minmax(0,7fr)_minmax(0,3fr)] sm:items-center sm:gap-3 sm:p-3.5';
+
+/** Tighter create row: slightly smaller gaps and button padding. */
+const PROJECTS_CREATE_FORM_CLASS = 'flex min-w-0 flex-row items-center gap-1.5';
+
+/** Accent CTA with narrower horizontal padding than WORKSPACE_ACCENT_BTN_CLASS for this toolbar. */
+const PROJECTS_CREATE_BTN_CLASS =
+  'rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-violet-500 disabled:pointer-events-none disabled:opacity-60 sm:px-3.5';
 
 function buildDisplayRows(
   serverProjects: ProjectListRow[],
@@ -105,33 +117,6 @@ export function WorkspaceProjectsSection({ initialProjects }: { initialProjects:
 
   return (
     <>
-      <form
-        ref={formRef}
-        className={`flex flex-wrap items-end gap-4 p-5 ${WORKSPACE_PANEL_CLASS}`}
-        onSubmit={handleSubmit}
-      >
-        <label className={`flex min-w-[200px] flex-1 flex-col gap-2 ${WORKSPACE_LABEL_CLASS}`} htmlFor="name">
-          New project
-          <input
-            className={WORKSPACE_FIELD_CLASS}
-            disabled={isPending}
-            id="name"
-            name="name"
-            placeholder="Project name"
-            required
-            type="text"
-          />
-        </label>
-        <button
-          aria-busy={isPending}
-          className={`${WORKSPACE_ACCENT_BTN_CLASS} disabled:pointer-events-none disabled:opacity-60`}
-          disabled={isPending}
-          type="submit"
-        >
-          {isPending ? 'Creating…' : 'Create'}
-        </button>
-      </form>
-
       <div className={`overflow-hidden ${WORKSPACE_PANEL_CLASS}`}>
         <div className="border-b border-workspace-hairline bg-workspace-canvas px-5 py-4">
           <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-neutral-300">
@@ -139,8 +124,9 @@ export function WorkspaceProjectsSection({ initialProjects }: { initialProjects:
             All projects
           </div>
           <p className="mt-1 text-sm text-neutral-500">Open a project to continue planning.</p>
-          {hasAnyProjects ? (
-            <div className="relative mt-4">
+
+          <div className={PROJECTS_TOOLBAR_CLASS}>
+            <div className={PROJECTS_SEARCH_FIELD_WRAP_CLASS}>
               <MagnifyingGlassGlyph className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
               <label className="sr-only" htmlFor="workspace-project-search">
                 Search projects
@@ -150,12 +136,39 @@ export function WorkspaceProjectsSection({ initialProjects }: { initialProjects:
                 className={`w-full pl-10 pr-3 ${WORKSPACE_FIELD_CLASS}`}
                 id="workspace-project-search"
                 onChange={(e) => setProjectSearch(e.target.value)}
-                placeholder="Search projects…"
+                placeholder="Search…"
                 type="search"
                 value={projectSearch}
               />
             </div>
-          ) : null}
+
+            <form
+              ref={formRef}
+              className={PROJECTS_CREATE_FORM_CLASS}
+              onSubmit={handleSubmit}
+            >
+              <label className="sr-only" htmlFor="name">
+                New project
+              </label>
+              <input
+                className={`min-w-0 flex-1 ${WORKSPACE_FIELD_CLASS}`}
+                disabled={isPending}
+                id="name"
+                name="name"
+                placeholder="Name…"
+                required
+                type="text"
+              />
+              <button
+                aria-busy={isPending}
+                className={`shrink-0 ${PROJECTS_CREATE_BTN_CLASS} disabled:pointer-events-none disabled:opacity-60`}
+                disabled={isPending}
+                type="submit"
+              >
+                {isPending ? 'Creating…' : 'Create'}
+              </button>
+            </form>
+          </div>
         </div>
         <ul className="divide-y divide-white/[0.06]">
           {!hasAnyProjects ? (
