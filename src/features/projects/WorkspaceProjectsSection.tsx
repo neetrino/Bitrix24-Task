@@ -1,11 +1,14 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState, useTransition, useActionState } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition, useActionState } from 'react';
 import { toast } from 'sonner';
 import { createProject, type CreateProjectState } from '@/features/projects/project-actions';
-import { SparklesGlyph } from '@/shared/ui/brand-icons';
+import {
+  WorkspaceProjectListRow,
+  type ProjectListRow,
+} from '@/features/projects/WorkspaceProjectListRow';
+import { MagnifyingGlassGlyph, SparklesGlyph } from '@/shared/ui/brand-icons';
 import {
   WORKSPACE_ACCENT_BTN_CLASS,
   WORKSPACE_FIELD_CLASS,
@@ -13,12 +16,7 @@ import {
   WORKSPACE_PANEL_CLASS,
 } from '@/shared/ui/workspace-ui';
 
-export type ProjectListRow = {
-  id: string;
-  name: string;
-  slug: string;
-  updatedAt: string;
-};
+export type { ProjectListRow };
 
 type DisplayRow = ProjectListRow & { pending?: boolean };
 
@@ -48,6 +46,24 @@ export function WorkspaceProjectsSection({ initialProjects }: { initialProjects:
   const [state, formAction] = useActionState(createProject, undefined);
   const [isPending, startTransition] = useTransition();
   const [pendingName, setPendingName] = useState<string | null>(null);
+  const [projectSearch, setProjectSearch] = useState('');
+
+  const filteredRows = useMemo(() => {
+    const built = buildDisplayRows(initialProjects, pendingName);
+    const q = projectSearch.trim().toLowerCase();
+    if (!q) {
+      return built;
+    }
+    return built.filter((row) => {
+      if (row.pending) {
+        return true;
+      }
+      return row.name.toLowerCase().includes(q) || row.slug.toLowerCase().includes(q);
+    });
+  }, [initialProjects, pendingName, projectSearch]);
+
+  const hasAnyProjects = initialProjects.length > 0 || pendingName !== null;
+  const searchActive = projectSearch.trim().length > 0;
 
   useEffect(() => {
     if (!isPending) submitGuardRef.current = false;
@@ -87,8 +103,6 @@ export function WorkspaceProjectsSection({ initialProjects }: { initialProjects:
     });
   };
 
-  const rows = buildDisplayRows(initialProjects, pendingName);
-
   return (
     <>
       <form
@@ -125,12 +139,33 @@ export function WorkspaceProjectsSection({ initialProjects }: { initialProjects:
             All projects
           </div>
           <p className="mt-1 text-sm text-neutral-500">Open a project to continue planning.</p>
+          {hasAnyProjects ? (
+            <div className="relative mt-4">
+              <MagnifyingGlassGlyph className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+              <label className="sr-only" htmlFor="workspace-project-search">
+                Search projects
+              </label>
+              <input
+                autoComplete="off"
+                className={`w-full pl-10 pr-3 ${WORKSPACE_FIELD_CLASS}`}
+                id="workspace-project-search"
+                onChange={(e) => setProjectSearch(e.target.value)}
+                placeholder="Search projects…"
+                type="search"
+                value={projectSearch}
+              />
+            </div>
+          ) : null}
         </div>
         <ul className="divide-y divide-white/[0.06]">
-          {rows.length === 0 ? (
+          {!hasAnyProjects ? (
             <li className="px-5 py-8 text-sm text-neutral-500">No projects yet — add one above.</li>
+          ) : filteredRows.length === 0 ? (
+            <li className="px-5 py-8 text-sm text-neutral-500">
+              {searchActive ? 'No projects match your search.' : 'No projects yet — add one above.'}
+            </li>
           ) : (
-            rows.map((p) => (
+            filteredRows.map((p) => (
               <li key={p.id}>
                 {p.pending ? (
                   <div className="flex items-center justify-between gap-4 px-5 py-4 opacity-90">
@@ -138,15 +173,7 @@ export function WorkspaceProjectsSection({ initialProjects }: { initialProjects:
                     <span className="shrink-0 text-xs font-medium text-neutral-400">Creating…</span>
                   </div>
                 ) : (
-                  <Link
-                    className="flex items-center justify-between gap-4 px-5 py-4 transition hover:bg-white/[0.04]"
-                    href={`/app/projects/${p.slug}`}
-                  >
-                    <span className="font-medium text-neutral-100">{p.name}</span>
-                    <span className="shrink-0 text-xs tabular-nums text-neutral-500">
-                      {p.updatedAt.slice(0, 10)}
-                    </span>
-                  </Link>
+                  <WorkspaceProjectListRow project={p} />
                 )}
               </li>
             ))
