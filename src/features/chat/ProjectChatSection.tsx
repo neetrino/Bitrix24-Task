@@ -19,10 +19,14 @@ import {
   type MessageAttachmentMeta,
   MessageAttachmentChip,
 } from '@/features/chat/MessageAttachmentChip';
+import { MessageMeta } from '@/features/chat/MessageMeta';
+import { ModelBadge } from '@/features/chat/ModelBadge';
 import {
   AssistantPendingRow,
   SendOrStopControl,
+  UpdatePlanToggle,
 } from '@/features/chat/ProjectChatComposerControls';
+import type { ModelPreset } from '@/shared/lib/ai-models';
 import { SiteLogoImage } from '@/shared/ui/site-logo';
 
 export type ChatMessageLine = {
@@ -30,6 +34,9 @@ export type ChatMessageLine = {
   role: string;
   content: string;
   attachments?: MessageAttachmentMeta[];
+  modelId?: string | null;
+  contextProfile?: string | null;
+  tokensUsed?: number | null;
 };
 
 const CHAT_CONTENT_MAX = 'max-w-3xl';
@@ -47,11 +54,6 @@ const CHAT_INPUT_MAX_HEIGHT_PX = 400;
 /** Covers subpixel / line-height rounding so 2 lines do not falsely show a scrollbar. */
 const CHAT_INPUT_SCROLL_HEIGHT_BUFFER_PX = 4;
 
-function formatModelLabel(id: string): string {
-  if (id.length <= 28) return id;
-  return `${id.slice(0, 14)}…${id.slice(-10)}`;
-}
-
 function makeLocalId(): string {
   return `local-${crypto.randomUUID()}`;
 }
@@ -60,7 +62,8 @@ type ProjectChatSectionProps = {
   initialMessages: ChatMessageLine[];
   projectSlug: string;
   phaseId: string | null;
-  activeModel: string;
+  modelPreset: ModelPreset;
+  pinnedModelId: string | null;
 };
 
 type ChatPostResponseJson = {
@@ -75,14 +78,15 @@ async function postProjectChatRequest(params: {
   message: string;
   phaseId: string | null;
   attachmentIds: string[];
+  explicitPlanIntent: boolean;
   router: { refresh: () => void };
 }): Promise<void> {
-  const { url, signal, message, phaseId, attachmentIds, router } = params;
+  const { url, signal, message, phaseId, attachmentIds, explicitPlanIntent, router } = params;
   try {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, phaseId, attachmentIds }),
+      body: JSON.stringify({ message, phaseId, attachmentIds, explicitPlanIntent }),
       signal,
     });
 
@@ -113,7 +117,8 @@ function ProjectChatSectionImpl({
   initialMessages,
   projectSlug,
   phaseId,
-  activeModel,
+  modelPreset,
+  pinnedModelId,
 }: ProjectChatSectionProps) {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -152,6 +157,8 @@ function ProjectChatSectionImpl({
   const uploadAbortRefs = useRef<Map<string, AbortController>>(new Map());
 
   const [attachments, setAttachments] = useState<AttachmentDraft[]>([]);
+  /** When true, next submit forces the planning context profile server-side. */
+  const [planIntentArmed, setPlanIntentArmed] = useState(false);
   const [dragDepth, setDragDepth] = useState(0);
   const isDragging = dragDepth > 0;
 
@@ -334,6 +341,8 @@ function ProjectChatSectionImpl({
     setDraft('');
     const sentAttachments = [...attachments];
     setAttachments([]);
+    const sentPlanIntent = planIntentArmed;
+    setPlanIntentArmed(false);
     const optimisticAttachments: MessageAttachmentMeta[] = sentAttachments
       .filter((a) => a.status === 'ready' && a.serverId)
       .map((a) => ({
@@ -359,6 +368,7 @@ function ProjectChatSectionImpl({
       message,
       phaseId,
       attachmentIds: readyAttachmentIds,
+      explicitPlanIntent: sentPlanIntent,
       router,
     })
       .catch(() => {
@@ -401,6 +411,11 @@ function ProjectChatSectionImpl({
                   return (
                     <div className="text-[15px] leading-relaxed text-neutral-50" key={m.id}>
                       <span className="whitespace-pre-wrap">{m.content}</span>
+                      <MessageMeta
+                        contextProfile={m.contextProfile ?? null}
+                        modelId={m.modelId ?? null}
+                        tokensUsed={m.tokensUsed ?? null}
+                      />
                     </div>
                   );
                 }
@@ -475,7 +490,7 @@ function ProjectChatSectionImpl({
               />
               <button
                 aria-label="Attach files"
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-neutral-300 transition hover:text-white ${isComposerMultiline ? 'mr-auto' : ''}`}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-neutral-300 transition hover:text-white"
                 onClick={() => fileInputRef.current?.click()}
                 title="Attach .md, .txt, .json, .yaml"
                 type="button"
@@ -490,6 +505,12 @@ function ProjectChatSectionImpl({
                   />
                 </svg>
               </button>
+              <div className={isComposerMultiline ? 'mr-auto' : ''}>
+                <UpdatePlanToggle
+                  armed={planIntentArmed}
+                  onToggle={() => setPlanIntentArmed((v) => !v)}
+                />
+              </div>
               <label className="sr-only" htmlFor="project-chat-message">
                 Message
               </label>
@@ -514,12 +535,9 @@ function ProjectChatSectionImpl({
                 }}
                 value={draft}
               />
-              <span
-                className="hidden min-w-0 shrink truncate text-right text-[11px] text-neutral-500 sm:inline"
-                title={activeModel}
-              >
-                {formatModelLabel(activeModel)}
-              </span>
+              <div className="hidden shrink-0 sm:block">
+                <ModelBadge pinnedModelId={pinnedModelId} preset={modelPreset} />
+              </div>
               <div className="shrink-0">
                 <SendOrStopControl onStop={handleStop} pending={isSending} />
               </div>
