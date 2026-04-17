@@ -4,16 +4,22 @@ export {
   type ModelCapabilities,
   type ModelPricing,
   type ModelTier,
+  type TierColor,
   getDefaultModelForTier,
   getModelById,
+  getTierColor,
   isKnownModelId,
+  isReasoningTier,
 } from './catalog';
 export {
   DEFAULT_PRESET,
   MODEL_PRESETS,
   type ModelPreset,
+  type PresetAccent,
+  type PresetAccentClasses,
   type PresetMeta,
   getDefaultModelForPreset,
+  getPresetAccentClasses,
   getPresetMeta,
   isModelPreset,
 } from './presets';

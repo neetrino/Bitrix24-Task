@@ -33,16 +33,14 @@ export type ChatModel = {
   readonly description: string;
   readonly pricing: ModelPricing;
   readonly capabilities: ModelCapabilities;
-  /** When false, hide from the user-facing model picker (legacy/transitional). */
-  readonly visibleInPicker: boolean;
 };
 
 /**
- * Catalog ordered roughly cheapest → most expensive within each tier.
- * Add new models here; do not duplicate this list elsewhere.
+ * Curated catalog: exactly one model per tier. Legacy GPT-4 and older
+ * o-series models were removed because their newer GPT-5 / o4 counterparts
+ * dominate them on price, context window, and quality.
  */
 export const CHAT_MODELS: readonly ChatModel[] = [
-  // Nano tier — fastest, cheapest, weakest reasoning.
   {
     id: 'gpt-5-nano',
     label: 'GPT-5 nano',
@@ -50,19 +48,7 @@ export const CHAT_MODELS: readonly ChatModel[] = [
     description: 'Fastest, cheapest GPT-5 variant',
     pricing: { promptPer1M: 0.05, completionPer1M: 0.4 },
     capabilities: { supportsJsonMode: true, isReasoning: false, contextWindow: 400_000 },
-    visibleInPicker: true,
   },
-  {
-    id: 'gpt-4o-mini',
-    label: 'GPT-4o mini',
-    tier: 'nano',
-    description: 'Legacy budget model — kept for compatibility',
-    pricing: { promptPer1M: 0.15, completionPer1M: 0.6 },
-    capabilities: { supportsJsonMode: true, isReasoning: false, contextWindow: 128_000 },
-    visibleInPicker: true,
-  },
-
-  // Mini tier — solid quality, still budget-friendly.
   {
     id: 'gpt-5-mini',
     label: 'GPT-5 mini',
@@ -70,19 +56,7 @@ export const CHAT_MODELS: readonly ChatModel[] = [
     description: 'Balanced GPT-5 — strong quality at moderate cost',
     pricing: { promptPer1M: 0.25, completionPer1M: 2.0 },
     capabilities: { supportsJsonMode: true, isReasoning: false, contextWindow: 400_000 },
-    visibleInPicker: true,
   },
-  {
-    id: 'gpt-4.1-mini',
-    label: 'GPT-4.1 mini',
-    tier: 'mini',
-    description: 'Legacy mid-tier model',
-    pricing: { promptPer1M: 0.4, completionPer1M: 1.6 },
-    capabilities: { supportsJsonMode: true, isReasoning: false, contextWindow: 1_000_000 },
-    visibleInPicker: true,
-  },
-
-  // Standard tier — flagship general-purpose.
   {
     id: 'gpt-5',
     label: 'GPT-5',
@@ -90,45 +64,14 @@ export const CHAT_MODELS: readonly ChatModel[] = [
     description: 'Flagship GPT-5 — best general quality',
     pricing: { promptPer1M: 1.25, completionPer1M: 10.0 },
     capabilities: { supportsJsonMode: true, isReasoning: false, contextWindow: 400_000 },
-    visibleInPicker: true,
   },
-  {
-    id: 'gpt-4o',
-    label: 'GPT-4o',
-    tier: 'standard',
-    description: 'Legacy strong general model',
-    pricing: { promptPer1M: 2.5, completionPer1M: 10.0 },
-    capabilities: { supportsJsonMode: true, isReasoning: false, contextWindow: 128_000 },
-    visibleInPicker: true,
-  },
-  {
-    id: 'gpt-4.1',
-    label: 'GPT-4.1',
-    tier: 'standard',
-    description: 'Legacy capable model',
-    pricing: { promptPer1M: 2.0, completionPer1M: 8.0 },
-    capabilities: { supportsJsonMode: true, isReasoning: false, contextWindow: 1_000_000 },
-    visibleInPicker: true,
-  },
-
-  // Reasoning tier — slow, expensive, for hard decomposition / planning tasks.
   {
     id: 'o4-mini',
     label: 'o4 mini',
     tier: 'reasoning',
-    description: 'Reasoning-focused, moderate cost',
+    description: 'Reasoning-focused model for decomposition and analysis',
     pricing: { promptPer1M: 1.1, completionPer1M: 4.4 },
     capabilities: { supportsJsonMode: true, isReasoning: true, contextWindow: 200_000 },
-    visibleInPicker: true,
-  },
-  {
-    id: 'o3-mini',
-    label: 'o3-mini',
-    tier: 'reasoning',
-    description: 'Reasoning — high-cost legacy model',
-    pricing: { promptPer1M: 1.1, completionPer1M: 4.4 },
-    capabilities: { supportsJsonMode: true, isReasoning: true, contextWindow: 200_000 },
-    visibleInPicker: true,
   },
 ];
 
@@ -151,4 +94,44 @@ export function getDefaultModelForTier(tier: ModelTier): ChatModel {
     throw new Error(`No model registered for tier "${tier}"`);
   }
   return match;
+}
+
+export function isReasoningTier(tier: ModelTier): boolean {
+  return tier === 'reasoning';
+}
+
+export type TierColor = {
+  /** Tailwind class for a left-side accent border on list rows (`border-l-2`). */
+  readonly border: string;
+  /** Tailwind class for a small dot/badge fill (`bg-…/70`). */
+  readonly dot: string;
+  /** Tailwind class for the label text colour. */
+  readonly text: string;
+};
+
+const TIER_COLORS: Readonly<Record<ModelTier, TierColor>> = {
+  nano: {
+    border: 'border-emerald-500/50',
+    dot: 'bg-emerald-400/80',
+    text: 'text-emerald-300',
+  },
+  mini: {
+    border: 'border-yellow-500/50',
+    dot: 'bg-yellow-400/80',
+    text: 'text-yellow-200',
+  },
+  reasoning: {
+    border: 'border-amber-500/50',
+    dot: 'bg-amber-400/80',
+    text: 'text-amber-200',
+  },
+  standard: {
+    border: 'border-rose-500/50',
+    dot: 'bg-rose-400/80',
+    text: 'text-rose-300',
+  },
+};
+
+export function getTierColor(tier: ModelTier): TierColor {
+  return TIER_COLORS[tier];
 }

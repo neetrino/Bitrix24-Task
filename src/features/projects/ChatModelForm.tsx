@@ -85,14 +85,14 @@ export function ChatModelForm({ project }: { project: ProjectModelFields }) {
 
       {preset === 'PINNED' ? (
         <label className="flex flex-col gap-1.5">
-          <span className={WORKSPACE_LABEL_CLASS}>Pinned model</span>
+          <span className={WORKSPACE_LABEL_CLASS}>Model</span>
           <select
             className={`max-w-xl ${WORKSPACE_FIELD_CLASS}`}
             name="pinnedModelId"
             onChange={(e) => setPinnedModelId(e.target.value)}
             value={pinnedModelId}
           >
-            {CHAT_MODELS.filter((m) => m.visibleInPicker).map((m) => (
+            {CHAT_MODELS.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.label} — {m.description}
               </option>

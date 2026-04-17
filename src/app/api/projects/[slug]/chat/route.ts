@@ -22,8 +22,12 @@ const chatPostBodySchema = z.object({
   message: z.string().max(CHAT_MESSAGE_MAX_LEN),
   phaseId: z.union([z.string().min(1), z.null()]).optional(),
   attachmentIds: z.array(z.string().min(1)).max(ATTACHMENT_MAX_PER_MESSAGE).optional(),
-  /** UI button "Update plan" sets this to force the planning profile. */
+  /** UI button "Plan" (and `/plan` command) sets this to force planning. */
   explicitPlanIntent: z.boolean().optional(),
+  /** Per-turn override of the project's default model preset. */
+  oneOffPreset: z.enum(['AUTO', 'ECONOMY', 'BALANCED', 'QUALITY', 'PINNED']).optional(),
+  /** Pinned model id when `oneOffPreset === 'PINNED'`. */
+  oneOffPinnedModelId: z.string().min(1).optional(),
 });
 
 function httpStatusForChatError(error: string): number {
@@ -108,9 +112,16 @@ export async function POST(
   }
 
   const budget = await loadBudgetSnapshot({ userId, projectId: project.id });
+  const effectivePreset = parsed.data.oneOffPreset ?? project.modelPreset;
+  const effectivePinnedModelId =
+    parsed.data.oneOffPreset === 'PINNED'
+      ? (parsed.data.oneOffPinnedModelId ?? project.pinnedModelId)
+      : parsed.data.oneOffPreset
+        ? null
+        : project.pinnedModelId;
   const routerDecision = pickModelAndProfile({
-    preset: project.modelPreset,
-    pinnedModelId: project.pinnedModelId,
+    preset: effectivePreset,
+    pinnedModelId: effectivePinnedModelId,
     profileDecision,
     messageLength: cleanedMessage.length,
     attachmentCount,

@@ -7,7 +7,6 @@
 
 import {
   CHAT_MODELS,
-  type ChatModel,
   getDefaultModelForTier,
   isKnownModelId as catalogIsKnown,
 } from './ai-models/catalog';
@@ -20,9 +19,9 @@ export type OpenAiChatModelOption = {
   readonly description: string;
 };
 
-export const OPENAI_CHAT_MODEL_OPTIONS: readonly OpenAiChatModelOption[] = CHAT_MODELS
-  .filter((m: ChatModel) => m.visibleInPicker)
-  .map((m) => ({ id: m.id, label: m.label, description: m.description }));
+export const OPENAI_CHAT_MODEL_OPTIONS: readonly OpenAiChatModelOption[] = CHAT_MODELS.map(
+  (m) => ({ id: m.id, label: m.label, description: m.description }),
+);
 
 export function isAllowedChatModelId(id: string): boolean {
   return catalogIsKnown(id);

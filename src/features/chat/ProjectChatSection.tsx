@@ -20,12 +20,17 @@ import {
   MessageAttachmentChip,
 } from '@/features/chat/MessageAttachmentChip';
 import { MessageMeta } from '@/features/chat/MessageMeta';
-import { ModelBadge } from '@/features/chat/ModelBadge';
+import { ModelPresetPicker } from '@/features/chat/ModelPresetPicker';
+import { NanoPlanWarning } from '@/features/chat/NanoPlanWarning';
 import {
   AssistantPendingRow,
   SendOrStopControl,
   UpdatePlanToggle,
 } from '@/features/chat/ProjectChatComposerControls';
+import {
+  type ModelOverride,
+  useProjectModelOverride,
+} from '@/features/chat/use-project-model-override';
 import type { ModelPreset } from '@/shared/lib/ai-models';
 import { SiteLogoImage } from '@/shared/ui/site-logo';
 
@@ -60,6 +65,7 @@ function makeLocalId(): string {
 
 type ProjectChatSectionProps = {
   initialMessages: ChatMessageLine[];
+  projectId: string;
   projectSlug: string;
   phaseId: string | null;
   modelPreset: ModelPreset;
@@ -72,6 +78,37 @@ type ChatPostResponseJson = {
   ok?: boolean;
 };
 
+type ChatPostBody = {
+  message: string;
+  phaseId: string | null;
+  attachmentIds: string[];
+  explicitPlanIntent: boolean;
+  oneOffPreset?: ModelPreset;
+  oneOffPinnedModelId?: string;
+};
+
+function buildChatPostBody(params: {
+  message: string;
+  phaseId: string | null;
+  attachmentIds: string[];
+  explicitPlanIntent: boolean;
+  override: ModelOverride | null;
+}): ChatPostBody {
+  const body: ChatPostBody = {
+    message: params.message,
+    phaseId: params.phaseId,
+    attachmentIds: params.attachmentIds,
+    explicitPlanIntent: params.explicitPlanIntent,
+  };
+  if (params.override) {
+    body.oneOffPreset = params.override.preset;
+    if (params.override.preset === 'PINNED' && params.override.pinnedModelId) {
+      body.oneOffPinnedModelId = params.override.pinnedModelId;
+    }
+  }
+  return body;
+}
+
 async function postProjectChatRequest(params: {
   url: string;
   signal: AbortSignal;
@@ -79,14 +116,26 @@ async function postProjectChatRequest(params: {
   phaseId: string | null;
   attachmentIds: string[];
   explicitPlanIntent: boolean;
+  override: ModelOverride | null;
   router: { refresh: () => void };
 }): Promise<void> {
-  const { url, signal, message, phaseId, attachmentIds, explicitPlanIntent, router } = params;
+  const {
+    url,
+    signal,
+    message,
+    phaseId,
+    attachmentIds,
+    explicitPlanIntent,
+    override,
+    router,
+  } = params;
   try {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, phaseId, attachmentIds, explicitPlanIntent }),
+      body: JSON.stringify(
+        buildChatPostBody({ message, phaseId, attachmentIds, explicitPlanIntent, override }),
+      ),
       signal,
     });
 
@@ -115,12 +164,17 @@ async function postProjectChatRequest(params: {
 
 function ProjectChatSectionImpl({
   initialMessages,
+  projectId,
   projectSlug,
   phaseId,
   modelPreset,
   pinnedModelId,
 }: ProjectChatSectionProps) {
   const router = useRouter();
+  const modelOverride = useProjectModelOverride(projectId, {
+    preset: modelPreset,
+    pinnedModelId,
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -369,6 +423,7 @@ function ProjectChatSectionImpl({
       phaseId,
       attachmentIds: readyAttachmentIds,
       explicitPlanIntent: sentPlanIntent,
+      override: modelOverride.override,
       router,
     })
       .catch(() => {
@@ -465,84 +520,102 @@ function ProjectChatSectionImpl({
       />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-5 pt-6">
         <div className={`pointer-events-auto w-full ${CHAT_CONTENT_MAX}`}>
-          <div className="flex w-full min-w-0 flex-col gap-2 rounded-[1.75rem] bg-workspace-elevated px-2 py-3.5 shadow-[0_2px_6px_rgba(0,0,0,0.35),0_12px_28px_-12px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.04)]">
-            {attachments.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5 px-1.5 pt-1">
-                {attachments.map((a) => (
-                  <AttachmentChip
-                    draft={a}
-                    key={a.localId}
-                    onRemove={() => removeAttachment(a.localId)}
-                  />
-                ))}
-              </div>
-            ) : null}
-            <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-              <input
-                accept={ATTACHMENT_ACCEPT_ATTRIBUTE}
-                aria-hidden
-                className="hidden"
-                multiple
-                onChange={handleFileInputChange}
-                ref={fileInputRef}
-                tabIndex={-1}
-                type="file"
+          <div className="flex w-full min-w-0 items-end gap-2">
+            <div className="hidden shrink-0 pb-1 sm:block">
+              <UpdatePlanToggle
+                armed={planIntentArmed}
+                onToggle={() => setPlanIntentArmed((v) => !v)}
               />
-              <button
-                aria-label="Attach files"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-neutral-300 transition hover:text-white"
-                onClick={() => fileInputRef.current?.click()}
-                title="Attach .md, .txt, .json, .yaml"
-                type="button"
-              >
-                <svg aria-hidden className="h-[22px] w-[22px]" fill="none" viewBox="0 0 24 24">
-                  <path
-                    d="M12 5v14m-7-7h14"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                  />
-                </svg>
-              </button>
-              <div className={isComposerMultiline ? 'mr-auto' : ''}>
-                <UpdatePlanToggle
-                  armed={planIntentArmed}
-                  onToggle={() => setPlanIntentArmed((v) => !v)}
+            </div>
+            <div className="flex w-full min-w-0 flex-col gap-2 rounded-[1.75rem] bg-workspace-elevated px-2 py-3.5 shadow-[0_2px_6px_rgba(0,0,0,0.35),0_12px_28px_-12px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.04)]">
+              {attachments.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5 px-1.5 pt-1">
+                  {attachments.map((a) => (
+                    <AttachmentChip
+                      draft={a}
+                      key={a.localId}
+                      onRemove={() => removeAttachment(a.localId)}
+                    />
+                  ))}
+                </div>
+              ) : null}
+              <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                <input
+                  accept={ATTACHMENT_ACCEPT_ATTRIBUTE}
+                  aria-hidden
+                  className="hidden"
+                  multiple
+                  onChange={handleFileInputChange}
+                  ref={fileInputRef}
+                  tabIndex={-1}
+                  type="file"
                 />
-              </div>
-              <label className="sr-only" htmlFor="project-chat-message">
-                Message
-              </label>
-              <textarea
-                className={`scrollbar-chat-composer-hidden box-border min-w-0 resize-none bg-transparent px-1 pb-1 pt-2 text-[15px] leading-snug text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:ring-0 ${isComposerMultiline ? 'order-first w-full basis-full' : 'w-full flex-1'}`}
-                id="project-chat-message"
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    if (!isSending && !hasUploadingAttachment) {
-                      e.currentTarget.form?.requestSubmit();
+                <button
+                  aria-label="Attach files"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-neutral-300 transition hover:text-white"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Attach .md, .txt, .json, .yaml"
+                  type="button"
+                >
+                  <svg aria-hidden className="h-[22px] w-[22px]" fill="none" viewBox="0 0 24 24">
+                    <path
+                      d="M12 5v14m-7-7h14"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                    />
+                  </svg>
+                </button>
+                <div className="shrink-0 sm:hidden">
+                  <UpdatePlanToggle
+                    armed={planIntentArmed}
+                    onToggle={() => setPlanIntentArmed((v) => !v)}
+                  />
+                </div>
+                <label className="sr-only" htmlFor="project-chat-message">
+                  Message
+                </label>
+                <textarea
+                  className={`scrollbar-chat-composer-hidden box-border min-w-0 resize-none bg-transparent px-1 pb-1 pt-2 text-[15px] leading-snug text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:ring-0 ${isComposerMultiline ? 'order-first w-full basis-full' : 'w-full flex-1'}`}
+                  id="project-chat-message"
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      if (!isSending && !hasUploadingAttachment) {
+                        e.currentTarget.form?.requestSubmit();
+                      }
                     }
-                  }
-                }}
-                placeholder="Describe your goal or paste specs…"
-                ref={messageTextareaRef}
-                rows={1}
-                style={{
-                  maxHeight: CHAT_INPUT_MAX_HEIGHT_PX,
-                  minHeight: CHAT_INPUT_MIN_HEIGHT_PX,
-                }}
-                value={draft}
-              />
-              <div className="hidden shrink-0 sm:block">
-                <ModelBadge pinnedModelId={pinnedModelId} preset={modelPreset} />
-              </div>
-              <div className="shrink-0">
-                <SendOrStopControl onStop={handleStop} pending={isSending} />
+                  }}
+                  placeholder="Describe your goal or paste specs…"
+                  ref={messageTextareaRef}
+                  rows={1}
+                  style={{
+                    maxHeight: CHAT_INPUT_MAX_HEIGHT_PX,
+                    minHeight: CHAT_INPUT_MIN_HEIGHT_PX,
+                  }}
+                  value={draft}
+                />
+                <div className="hidden shrink-0 sm:block">
+                  <ModelPresetPicker
+                    effective={modelOverride.effective}
+                    hasOverride={modelOverride.override !== null}
+                    onChange={modelOverride.setOverride}
+                    onReset={modelOverride.resetToProject}
+                  />
+                </div>
+                <div className="shrink-0">
+                  <SendOrStopControl onStop={handleStop} pending={isSending} />
+                </div>
               </div>
             </div>
           </div>
+          <NanoPlanWarning
+            draft={draft}
+            effective={modelOverride.effective}
+            planIntentArmed={planIntentArmed}
+          />
           <p className="mt-2 text-center text-[11px] leading-tight text-neutral-500">
             Aibonacci is AI and can make mistakes. Please double-check responses.
           </p>

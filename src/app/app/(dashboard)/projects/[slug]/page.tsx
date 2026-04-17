@@ -127,6 +127,7 @@ export default async function ProjectPage({
               modelPreset={project.modelPreset}
               phaseId={activePhaseId}
               pinnedModelId={project.pinnedModelId}
+              projectId={project.id}
               projectSlug={project.slug}
             />
           </section>

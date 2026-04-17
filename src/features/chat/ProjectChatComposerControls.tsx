@@ -85,14 +85,14 @@ export function UpdatePlanToggle({
 }) {
   return (
     <button
-      aria-label={armed ? 'Update plan armed for next message' : 'Arm update plan for next message'}
+      aria-label={armed ? 'Plan generation armed for next message' : 'Arm plan generation for next message'}
       aria-pressed={armed}
       className={armed ? UPDATE_PLAN_BTN_ARMED : UPDATE_PLAN_BTN_IDLE}
       onClick={(e) => {
         e.preventDefault();
         onToggle();
       }}
-      title="Use planning model for the next message; generates / updates the project plan."
+      title="Use the planning profile for the next message; generates or updates the project plan."
       type="button"
     >
       <svg aria-hidden className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
@@ -104,7 +104,7 @@ export function UpdatePlanToggle({
           strokeWidth="2"
         />
       </svg>
-      Update plan
+      Plan
     </button>
   );
 }
