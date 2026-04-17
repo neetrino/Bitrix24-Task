@@ -196,15 +196,12 @@ function ProjectChatSectionImpl({
               {displayMessages.map((m) =>
                 m.role === 'user' ? (
                   <div className="flex justify-end" key={m.id}>
-                    <div className="max-w-[min(100%,85%)] rounded-3xl bg-neutral-700 px-4 py-3 text-sm leading-relaxed text-neutral-100">
+                    <div className="max-w-[min(100%,85%)] rounded-3xl bg-[#323232] px-5 py-2.5 text-[15px] leading-relaxed text-neutral-50">
                       <span className="whitespace-pre-wrap">{m.content}</span>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-sm leading-relaxed text-neutral-300" key={m.id}>
-                    <span className="mb-2 block text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
-                      Assistant
-                    </span>
+                  <div className="text-[15px] leading-relaxed text-neutral-50" key={m.id}>
                     <span className="whitespace-pre-wrap">{m.content}</span>
                   </div>
                 ),
