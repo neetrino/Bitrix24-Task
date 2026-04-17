@@ -28,7 +28,7 @@ export function ProjectPlanMeta({
     Boolean(plan.project_title) && plan.project_title !== projectName;
 
   return (
-    <div className="shrink-0 border-b border-workspace-hairline px-2 py-3">
+    <div className="shrink-0 border-b border-workspace-hairline px-2 pb-3 pt-2">
       <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2">
         <SparklesGlyph className="col-start-1 row-start-1 h-3.5 w-3.5 shrink-0 self-center text-neutral-400" />
         <div className="col-start-2 row-start-1 min-w-0">

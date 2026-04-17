@@ -183,7 +183,7 @@ function ProjectChatSectionImpl({
       >
         {displayMessages.length === 0 ? (
           <div
-            className={`mx-auto flex w-full flex-1 flex-col items-center justify-center px-5 pb-44 pt-6 ${CHAT_CONTENT_MAX}`}
+            className={`mx-auto flex w-full flex-1 flex-col items-center justify-center px-5 pb-44 pt-2 ${CHAT_CONTENT_MAX}`}
           >
             <SiteLogoImage
               className="h-20 w-auto opacity-95"
@@ -191,7 +191,7 @@ function ProjectChatSectionImpl({
             />
           </div>
         ) : (
-          <div className={`mx-auto w-full ${CHAT_CONTENT_MAX} px-5 pb-44 pt-4`}>
+          <div className={`mx-auto w-full ${CHAT_CONTENT_MAX} px-5 pb-44 pt-2`}>
             <div className="space-y-10">
               {displayMessages.map((m) =>
                 m.role === 'user' ? (
