@@ -410,7 +410,7 @@ function ProjectChatSectionImpl({
       />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-5 pt-6">
         <div className={`pointer-events-auto w-full ${CHAT_CONTENT_MAX}`}>
-          <div className="flex w-full min-w-0 flex-col gap-2 rounded-[1.75rem] bg-workspace-elevated px-2 py-1.5 shadow-[0_2px_6px_rgba(0,0,0,0.35),0_12px_28px_-12px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <div className="flex w-full min-w-0 flex-col gap-2 rounded-[1.75rem] bg-workspace-elevated px-2 py-3.5 shadow-[0_2px_6px_rgba(0,0,0,0.35),0_12px_28px_-12px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.04)]">
             {attachments.length > 0 ? (
               <div className="flex flex-wrap gap-1.5 px-1.5 pt-1">
                 {attachments.map((a) => (
@@ -422,7 +422,7 @@ function ProjectChatSectionImpl({
                 ))}
               </div>
             ) : null}
-            <div className="flex w-full min-w-0 flex-wrap items-end gap-x-2 gap-y-1">
+            <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
               <input
                 accept={ATTACHMENT_ACCEPT_ATTRIBUTE}
                 aria-hidden
@@ -435,18 +435,26 @@ function ProjectChatSectionImpl({
               />
               <button
                 aria-label="Attach files"
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg leading-none text-neutral-400 transition hover:bg-white/[0.06] hover:text-neutral-200 ${isComposerMultiline ? 'mr-auto' : ''}`}
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-neutral-300 transition hover:text-white ${isComposerMultiline ? 'mr-auto' : ''}`}
                 onClick={() => fileInputRef.current?.click()}
                 title="Attach .md, .txt, .json, .yaml"
                 type="button"
               >
-                +
+                <svg aria-hidden className="h-[22px] w-[22px]" fill="none" viewBox="0 0 24 24">
+                  <path
+                    d="M12 5v14m-7-7h14"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                  />
+                </svg>
               </button>
               <label className="sr-only" htmlFor="project-chat-message">
                 Message
               </label>
               <textarea
-                className={`scrollbar-chat-composer-hidden box-border min-w-0 resize-none bg-transparent px-1 py-1.5 text-[15px] leading-snug text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:ring-0 ${isComposerMultiline ? 'order-first w-full basis-full' : 'w-full flex-1'}`}
+                className={`scrollbar-chat-composer-hidden box-border min-w-0 resize-none bg-transparent px-1 pb-1 pt-2 text-[15px] leading-snug text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:ring-0 ${isComposerMultiline ? 'order-first w-full basis-full' : 'w-full flex-1'}`}
                 id="project-chat-message"
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => {
@@ -467,7 +475,7 @@ function ProjectChatSectionImpl({
                 value={draft}
               />
               <span
-                className="mb-2 hidden min-w-0 shrink truncate text-right text-[11px] text-neutral-500 sm:inline"
+                className="hidden min-w-0 shrink truncate text-right text-[11px] text-neutral-500 sm:inline"
                 title={activeModel}
               >
                 {formatModelLabel(activeModel)}
@@ -477,6 +485,9 @@ function ProjectChatSectionImpl({
               </div>
             </div>
           </div>
+          <p className="mt-2 text-center text-[11px] leading-tight text-neutral-500">
+            Aibonacci is AI and can make mistakes. Please double-check responses.
+          </p>
         </div>
       </div>
     </form>
