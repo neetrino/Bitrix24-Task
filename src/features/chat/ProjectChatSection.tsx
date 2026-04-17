@@ -20,8 +20,11 @@ const CHAT_CONTENT_MAX = 'max-w-3xl';
 /** Empty state — logo mark above the composer (Claude-style). */
 const EMPTY_CHAT_LOGO_HEIGHT_PX = 80;
 
-/** Single-line row height; matches min-h + vertical padding in the composer. */
-const CHAT_INPUT_MIN_HEIGHT_PX = 44;
+/**
+ * Single-line textarea height — matches the action buttons (h-9 = 36px) so the
+ * composer reads as one thin pill row when the draft fits on a single line.
+ */
+const CHAT_INPUT_MIN_HEIGHT_PX = 36;
 /** Cap growth so the docked composer does not cover the whole viewport. */
 const CHAT_INPUT_MAX_HEIGHT_PX = 400;
 /** Covers subpixel / line-height rounding so 2 lines do not falsely show a scrollbar. */
@@ -114,6 +117,12 @@ function ProjectChatSectionImpl({
 
   const [isSending, setIsSending] = useState(false);
   const [draft, setDraft] = useState('');
+  /**
+   * True once the textarea has wrapped past its single-line height. Drives the
+   * ChatGPT-style layout switch where controls move to their own row below the
+   * textarea so the text can use the full pill width.
+   */
+  const [isComposerMultiline, setIsComposerMultiline] = useState(false);
   const messageTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -137,6 +146,7 @@ function ProjectChatSectionImpl({
       );
       el.style.height = `${nextHeight}px`;
       el.style.overflowY = el.scrollHeight > el.clientHeight ? 'auto' : 'hidden';
+      setIsComposerMultiline(nextHeight > CHAT_INPUT_MIN_HEIGHT_PX + CHAT_INPUT_SCROLL_HEIGHT_BUFFER_PX);
     });
     return () => cancelAnimationFrame(raf);
   }, [draft]);
@@ -218,53 +228,47 @@ function ProjectChatSectionImpl({
       />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-5 pt-6">
         <div className={`pointer-events-auto w-full ${CHAT_CONTENT_MAX}`}>
-          <div className="flex w-full flex-col">
-            <div className="flex w-full min-w-0 flex-col rounded-[1.75rem] border border-white/[0.1] bg-workspace-elevated px-3 pb-2 pt-3 shadow-none">
-              <label className="sr-only" htmlFor="project-chat-message">
-                Message
-              </label>
-              <textarea
-                className="scrollbar-chat-composer-hidden box-border min-h-[44px] w-full min-w-0 resize-none bg-transparent px-0.5 py-0 text-[15px] leading-snug text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:ring-0"
-                id="project-chat-message"
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    if (!isSending) {
-                      e.currentTarget.form?.requestSubmit();
-                    }
+          <div className="flex w-full min-w-0 flex-wrap items-end gap-x-2 gap-y-1 rounded-[1.75rem] border border-white/[0.1] bg-workspace-elevated px-2 py-1.5 shadow-none">
+            <button
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg leading-none text-neutral-500 transition hover:bg-white/[0.06] hover:text-neutral-300 ${isComposerMultiline ? 'mr-auto' : ''}`}
+              disabled
+              title="Attachments (coming soon)"
+              type="button"
+            >
+              +
+            </button>
+            <label className="sr-only" htmlFor="project-chat-message">
+              Message
+            </label>
+            <textarea
+              className={`scrollbar-chat-composer-hidden box-border min-w-0 resize-none bg-transparent px-1 py-1.5 text-[15px] leading-snug text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:ring-0 ${isComposerMultiline ? 'order-first w-full basis-full' : 'w-full flex-1'}`}
+              id="project-chat-message"
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  if (!isSending) {
+                    e.currentTarget.form?.requestSubmit();
                   }
-                }}
-                placeholder="Describe your goal or paste specs…"
-                ref={messageTextareaRef}
-                rows={1}
-                style={{
-                  maxHeight: CHAT_INPUT_MAX_HEIGHT_PX,
-                  minHeight: CHAT_INPUT_MIN_HEIGHT_PX,
-                }}
-                value={draft}
-              />
-              <div className="mt-2 flex min-h-[40px] w-full min-w-0 shrink-0 items-center gap-3 pt-0.5">
-                <button
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg leading-none text-neutral-500 transition hover:bg-white/[0.06] hover:text-neutral-300"
-                  disabled
-                  title="Attachments (coming soon)"
-                  type="button"
-                >
-                  +
-                </button>
-                <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
-                  <span
-                    className="min-w-0 truncate text-right text-[10px] text-neutral-500 sm:text-[11px]"
-                    title={activeModel}
-                  >
-                    {formatModelLabel(activeModel)}
-                  </span>
-                  <div className="shrink-0">
-                    <SendOrStopControl onStop={handleStop} pending={isSending} />
-                  </div>
-                </div>
-              </div>
+                }
+              }}
+              placeholder="Describe your goal or paste specs…"
+              ref={messageTextareaRef}
+              rows={1}
+              style={{
+                maxHeight: CHAT_INPUT_MAX_HEIGHT_PX,
+                minHeight: CHAT_INPUT_MIN_HEIGHT_PX,
+              }}
+              value={draft}
+            />
+            <span
+              className="mb-2 hidden min-w-0 shrink truncate text-right text-[11px] text-neutral-500 sm:inline"
+              title={activeModel}
+            >
+              {formatModelLabel(activeModel)}
+            </span>
+            <div className="shrink-0">
+              <SendOrStopControl onStop={handleStop} pending={isSending} />
             </div>
           </div>
         </div>
