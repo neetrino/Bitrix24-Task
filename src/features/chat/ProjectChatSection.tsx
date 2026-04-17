@@ -1,8 +1,19 @@
 'use client';
 
-import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import {
+  ATTACHMENT_ACCEPT_ATTRIBUTE,
+  ATTACHMENT_MAX_PER_MESSAGE,
+} from '@/features/attachments/attachment-rules';
+import { AttachmentChip } from '@/features/chat/AttachmentChip';
+import {
+  type AttachmentDraft,
+  deleteAttachment,
+  precheckFile,
+  uploadAttachment,
+} from '@/features/chat/attachment-uploads';
 import {
   AssistantPendingRow,
   SendOrStopControl,
@@ -35,6 +46,10 @@ function formatModelLabel(id: string): string {
   return `${id.slice(0, 14)}…${id.slice(-10)}`;
 }
 
+function makeLocalId(): string {
+  return `local-${crypto.randomUUID()}`;
+}
+
 type ProjectChatSectionProps = {
   initialMessages: ChatMessageLine[];
   projectSlug: string;
@@ -53,14 +68,15 @@ async function postProjectChatRequest(params: {
   signal: AbortSignal;
   message: string;
   phaseId: string | null;
+  attachmentIds: string[];
   router: { refresh: () => void };
 }): Promise<void> {
-  const { url, signal, message, phaseId, router } = params;
+  const { url, signal, message, phaseId, attachmentIds, router } = params;
   try {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, phaseId }),
+      body: JSON.stringify({ message, phaseId, attachmentIds }),
       signal,
     });
 
@@ -124,6 +140,139 @@ function ProjectChatSectionImpl({
    */
   const [isComposerMultiline, setIsComposerMultiline] = useState(false);
   const messageTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  /** Per-attachment AbortControllers so removal can cancel an in-flight upload. */
+  const uploadAbortRefs = useRef<Map<string, AbortController>>(new Map());
+
+  const [attachments, setAttachments] = useState<AttachmentDraft[]>([]);
+  const [dragDepth, setDragDepth] = useState(0);
+  const isDragging = dragDepth > 0;
+
+  const removeAttachment = useCallback(
+    (localId: string) => {
+      const controller = uploadAbortRefs.current.get(localId);
+      if (controller) {
+        controller.abort();
+        uploadAbortRefs.current.delete(localId);
+      }
+      setAttachments((prev) => {
+        const target = prev.find((a) => a.localId === localId);
+        if (target?.serverId) {
+          void deleteAttachment({
+            projectSlug,
+            attachmentId: target.serverId,
+          }).catch((err) => {
+            const msg = err instanceof Error ? err.message : 'Delete failed';
+            toast.error(msg);
+          });
+        }
+        return prev.filter((a) => a.localId !== localId);
+      });
+    },
+    [projectSlug],
+  );
+
+  const startUpload = useCallback(
+    (file: File) => {
+      const check = precheckFile(file);
+      if (!check.ok) {
+        toast.error(`${file.name}: ${check.error}`);
+        return;
+      }
+      const localId = makeLocalId();
+      const draftItem: AttachmentDraft = {
+        localId,
+        filename: file.name,
+        format: check.format,
+        sizeBytes: file.size,
+        status: 'uploading',
+      };
+      setAttachments((prev) => [...prev, draftItem]);
+
+      const controller = new AbortController();
+      uploadAbortRefs.current.set(localId, controller);
+
+      uploadAttachment({ projectSlug, file, phaseId, signal: controller.signal })
+        .then((res) => {
+          setAttachments((prev) =>
+            prev.map((a) =>
+              a.localId === localId ? { ...a, status: 'ready', serverId: res.id } : a,
+            ),
+          );
+        })
+        .catch((err) => {
+          if (err instanceof Error && err.name === 'AbortError') {
+            return;
+          }
+          const message = err instanceof Error ? err.message : 'Upload failed';
+          setAttachments((prev) =>
+            prev.map((a) =>
+              a.localId === localId ? { ...a, status: 'error', error: message } : a,
+            ),
+          );
+          toast.error(`${file.name}: ${message}`);
+        })
+        .finally(() => {
+          uploadAbortRefs.current.delete(localId);
+        });
+    },
+    [phaseId, projectSlug],
+  );
+
+  const enqueueFiles = useCallback(
+    (files: FileList | File[]) => {
+      const list = Array.from(files);
+      if (list.length === 0) return;
+      const remaining = ATTACHMENT_MAX_PER_MESSAGE - attachments.length;
+      if (remaining <= 0) {
+        toast.error(`Attachment limit reached (max ${ATTACHMENT_MAX_PER_MESSAGE} per message)`);
+        return;
+      }
+      const accepted = list.slice(0, remaining);
+      if (list.length > remaining) {
+        toast.error(`Only first ${remaining} file(s) added; limit is ${ATTACHMENT_MAX_PER_MESSAGE}`);
+      }
+      for (const file of accepted) {
+        startUpload(file);
+      }
+    },
+    [attachments.length, startUpload],
+  );
+
+  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      enqueueFiles(files);
+    }
+    event.target.value = '';
+  };
+
+  /** Increment-on-enter / decrement-on-leave avoids flicker over child elements. */
+  const handleDragEnter = (event: React.DragEvent<HTMLFormElement>) => {
+    if (!event.dataTransfer?.types.includes('Files')) return;
+    event.preventDefault();
+    setDragDepth((d) => d + 1);
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLFormElement>) => {
+    if (!event.dataTransfer?.types.includes('Files')) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLFormElement>) => {
+    if (!event.dataTransfer?.types.includes('Files')) return;
+    event.preventDefault();
+    setDragDepth((d) => Math.max(0, d - 1));
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLFormElement>) => {
+    if (!event.dataTransfer?.files || event.dataTransfer.files.length === 0) return;
+    event.preventDefault();
+    setDragDepth(0);
+    enqueueFiles(event.dataTransfer.files);
+  };
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -155,17 +304,29 @@ function ProjectChatSectionImpl({
     abortRef.current?.abort();
   };
 
+  const hasUploadingAttachment = attachments.some((a) => a.status === 'uploading');
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const message = draft.trim();
     if (!message || isSending) return;
+    if (hasUploadingAttachment) {
+      toast.error('Wait for attachments to finish uploading');
+      return;
+    }
+
+    const readyAttachmentIds = attachments
+      .filter((a) => a.status === 'ready' && a.serverId)
+      .map((a) => a.serverId as string);
 
     const controller = new AbortController();
     abortRef.current = controller;
     setIsSending(true);
     setDraft('');
+    const sentAttachments = [...attachments];
+    setAttachments([]);
     setPendingUserLines([
-      { id: `local-${crypto.randomUUID()}`, role: 'user', content: message },
+      { id: makeLocalId(), role: 'user', content: message },
     ]);
 
     const url = `/api/projects/${encodeURIComponent(projectSlug)}/chat`;
@@ -175,16 +336,26 @@ function ProjectChatSectionImpl({
       signal: controller.signal,
       message,
       phaseId,
+      attachmentIds: readyAttachmentIds,
       router,
-    }).finally(() => {
-      setIsSending(false);
-      abortRef.current = null;
-    });
+    })
+      .catch(() => {
+        // Restore attachments so the user can retry without re-uploading.
+        setAttachments(sentAttachments);
+      })
+      .finally(() => {
+        setIsSending(false);
+        abortRef.current = null;
+      });
   };
 
   return (
     <form
       className="relative flex h-full min-h-0 flex-1 flex-col bg-workspace-canvas"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
       onSubmit={handleSubmit}
     >
       <div
@@ -222,53 +393,88 @@ function ProjectChatSectionImpl({
         )}
       </div>
 
+      {isDragging ? (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-violet-500/[0.08] backdrop-blur-[1px]"
+        >
+          <div className="rounded-2xl border border-dashed border-violet-400/60 bg-neutral-900/80 px-6 py-4 text-sm text-neutral-100 shadow-2xl">
+            Drop files to attach (.md, .txt, .json, .yaml)
+          </div>
+        </div>
+      ) : null}
+
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-[#212121] via-[#212121]/90 to-transparent pb-2 pt-10"
       />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-5 pt-6">
         <div className={`pointer-events-auto w-full ${CHAT_CONTENT_MAX}`}>
-          <div className="flex w-full min-w-0 flex-wrap items-end gap-x-2 gap-y-1 rounded-[1.75rem] bg-workspace-elevated px-2 py-1.5 shadow-[0_2px_6px_rgba(0,0,0,0.35),0_12px_28px_-12px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.04)]">
-            <button
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg leading-none text-neutral-500 transition hover:bg-white/[0.06] hover:text-neutral-300 ${isComposerMultiline ? 'mr-auto' : ''}`}
-              disabled
-              title="Attachments (coming soon)"
-              type="button"
-            >
-              +
-            </button>
-            <label className="sr-only" htmlFor="project-chat-message">
-              Message
-            </label>
-            <textarea
-              className={`scrollbar-chat-composer-hidden box-border min-w-0 resize-none bg-transparent px-1 py-1.5 text-[15px] leading-snug text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:ring-0 ${isComposerMultiline ? 'order-first w-full basis-full' : 'w-full flex-1'}`}
-              id="project-chat-message"
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  if (!isSending) {
-                    e.currentTarget.form?.requestSubmit();
+          <div className="flex w-full min-w-0 flex-col gap-2 rounded-[1.75rem] bg-workspace-elevated px-2 py-1.5 shadow-[0_2px_6px_rgba(0,0,0,0.35),0_12px_28px_-12px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.04)]">
+            {attachments.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5 px-1.5 pt-1">
+                {attachments.map((a) => (
+                  <AttachmentChip
+                    draft={a}
+                    key={a.localId}
+                    onRemove={() => removeAttachment(a.localId)}
+                  />
+                ))}
+              </div>
+            ) : null}
+            <div className="flex w-full min-w-0 flex-wrap items-end gap-x-2 gap-y-1">
+              <input
+                accept={ATTACHMENT_ACCEPT_ATTRIBUTE}
+                aria-hidden
+                className="hidden"
+                multiple
+                onChange={handleFileInputChange}
+                ref={fileInputRef}
+                tabIndex={-1}
+                type="file"
+              />
+              <button
+                aria-label="Attach files"
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg leading-none text-neutral-400 transition hover:bg-white/[0.06] hover:text-neutral-200 ${isComposerMultiline ? 'mr-auto' : ''}`}
+                onClick={() => fileInputRef.current?.click()}
+                title="Attach .md, .txt, .json, .yaml"
+                type="button"
+              >
+                +
+              </button>
+              <label className="sr-only" htmlFor="project-chat-message">
+                Message
+              </label>
+              <textarea
+                className={`scrollbar-chat-composer-hidden box-border min-w-0 resize-none bg-transparent px-1 py-1.5 text-[15px] leading-snug text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:ring-0 ${isComposerMultiline ? 'order-first w-full basis-full' : 'w-full flex-1'}`}
+                id="project-chat-message"
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!isSending && !hasUploadingAttachment) {
+                      e.currentTarget.form?.requestSubmit();
+                    }
                   }
-                }
-              }}
-              placeholder="Describe your goal or paste specs…"
-              ref={messageTextareaRef}
-              rows={1}
-              style={{
-                maxHeight: CHAT_INPUT_MAX_HEIGHT_PX,
-                minHeight: CHAT_INPUT_MIN_HEIGHT_PX,
-              }}
-              value={draft}
-            />
-            <span
-              className="mb-2 hidden min-w-0 shrink truncate text-right text-[11px] text-neutral-500 sm:inline"
-              title={activeModel}
-            >
-              {formatModelLabel(activeModel)}
-            </span>
-            <div className="shrink-0">
-              <SendOrStopControl onStop={handleStop} pending={isSending} />
+                }}
+                placeholder="Describe your goal or paste specs…"
+                ref={messageTextareaRef}
+                rows={1}
+                style={{
+                  maxHeight: CHAT_INPUT_MAX_HEIGHT_PX,
+                  minHeight: CHAT_INPUT_MIN_HEIGHT_PX,
+                }}
+                value={draft}
+              />
+              <span
+                className="mb-2 hidden min-w-0 shrink truncate text-right text-[11px] text-neutral-500 sm:inline"
+                title={activeModel}
+              >
+                {formatModelLabel(activeModel)}
+              </span>
+              <div className="shrink-0">
+                <SendOrStopControl onStop={handleStop} pending={isSending} />
+              </div>
             </div>
           </div>
         </div>

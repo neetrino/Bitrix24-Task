@@ -114,6 +114,7 @@ export default async function ProjectPage({
                 }}
                 plan={plan}
                 projectName={project.name}
+                projectSlug={project.slug}
               />
             </div>
           </aside>
