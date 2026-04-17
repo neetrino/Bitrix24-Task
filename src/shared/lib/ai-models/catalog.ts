@@ -31,6 +31,8 @@ export type ChatModel = {
   readonly label: string;
   readonly tier: ModelTier;
   readonly description: string;
+  /** Short "when to pick this" hint shown in UI tooltips. */
+  readonly bestFor: string;
   readonly pricing: ModelPricing;
   readonly capabilities: ModelCapabilities;
 };
@@ -46,6 +48,8 @@ export const CHAT_MODELS: readonly ChatModel[] = [
     label: 'GPT-5 nano',
     tier: 'nano',
     description: 'Fastest, cheapest GPT-5 variant',
+    bestFor:
+      'Quick replies, classification, simple lookups — when speed and cost matter most.',
     pricing: { promptPer1M: 0.05, completionPer1M: 0.4 },
     capabilities: { supportsJsonMode: true, isReasoning: false, contextWindow: 400_000 },
   },
@@ -54,6 +58,8 @@ export const CHAT_MODELS: readonly ChatModel[] = [
     label: 'GPT-5 mini',
     tier: 'mini',
     description: 'Balanced GPT-5 — strong quality at moderate cost',
+    bestFor:
+      'Everyday coding, drafting, summaries — strong quality without flagship pricing.',
     pricing: { promptPer1M: 0.25, completionPer1M: 2.0 },
     capabilities: { supportsJsonMode: true, isReasoning: false, contextWindow: 400_000 },
   },
@@ -62,6 +68,8 @@ export const CHAT_MODELS: readonly ChatModel[] = [
     label: 'GPT-5',
     tier: 'standard',
     description: 'Flagship GPT-5 — best general quality',
+    bestFor:
+      'Hard reasoning, deep refactors, long-context tasks — when quality is critical.',
     pricing: { promptPer1M: 1.25, completionPer1M: 10.0 },
     capabilities: { supportsJsonMode: true, isReasoning: false, contextWindow: 400_000 },
   },
@@ -70,6 +78,8 @@ export const CHAT_MODELS: readonly ChatModel[] = [
     label: 'o4 mini',
     tier: 'reasoning',
     description: 'Reasoning-focused model for decomposition and analysis',
+    bestFor:
+      'Multi-step planning, decomposition, complex math — slower but deeper thinking.',
     pricing: { promptPer1M: 1.1, completionPer1M: 4.4 },
     capabilities: { supportsJsonMode: true, isReasoning: true, contextWindow: 200_000 },
   },

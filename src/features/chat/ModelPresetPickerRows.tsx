@@ -140,6 +140,29 @@ export function PresetRow({
   );
 }
 
+function ModelHoverHint({
+  label,
+  bestFor,
+  contextWindow,
+}: {
+  label: string;
+  bestFor: string;
+  contextWindow: number;
+}) {
+  const ctx = `${Math.round(contextWindow / 1000)}k context`;
+  return (
+    <div className="invisible absolute bottom-0 left-full z-[60] pl-2 opacity-0 transition group-hover:visible group-hover:opacity-100">
+      <div className="w-56 rounded-xl border border-white/[0.06] bg-neutral-900/95 p-3 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.7)] backdrop-blur">
+        <div className="text-[12px] font-medium text-neutral-100">{label}</div>
+        <p className="mt-1.5 text-[11px] leading-snug text-neutral-300">{bestFor}</p>
+        <p className="mt-2 text-[10.5px] uppercase tracking-wide text-neutral-500">
+          {ctx}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function ModelRow({
   modelId,
   active,
@@ -158,26 +181,33 @@ export function ModelRow({
   const idleClass =
     'bg-transparent text-neutral-300 hover:bg-white/[0.03] hover:text-neutral-100';
   return (
-    <button
-      aria-pressed={active}
-      className={`${baseClass} ${tierColor.border} ${active ? activeClass : idleClass}`}
-      onClick={onSelect}
-      type="button"
-    >
-      <span className={`flex flex-1 items-center gap-1.5 font-medium ${tierColor.text}`}>
-        {m.label}
-        {isReasoningTier(m.tier) ? (
-          <span
-            className="text-amber-300/80"
-            title="Reasoning model — slower, deeper analysis"
-          >
-            <ReasoningIcon />
-          </span>
-        ) : null}
-      </span>
-      <span className="text-[10.5px] tabular-nums text-neutral-500">
-        {modelPriceLabel(m.id)}
-      </span>
-    </button>
+    <div className="group relative">
+      <button
+        aria-pressed={active}
+        className={`${baseClass} ${tierColor.border} ${active ? activeClass : idleClass}`}
+        onClick={onSelect}
+        type="button"
+      >
+        <span className={`flex flex-1 items-center gap-1.5 font-medium ${tierColor.text}`}>
+          {m.label}
+          {isReasoningTier(m.tier) ? (
+            <span
+              className="text-amber-300/80"
+              title="Reasoning model — slower, deeper analysis"
+            >
+              <ReasoningIcon />
+            </span>
+          ) : null}
+        </span>
+        <span className="text-[10.5px] tabular-nums text-neutral-500">
+          {modelPriceLabel(m.id)}
+        </span>
+      </button>
+      <ModelHoverHint
+        bestFor={m.bestFor}
+        contextWindow={m.capabilities.contextWindow}
+        label={m.label}
+      />
+    </div>
   );
 }
